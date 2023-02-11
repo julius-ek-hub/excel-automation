@@ -94,7 +94,7 @@ def del_tmp_files():
     for filename in os.listdir(folder):
         file_path = os.path.join(folder, filename)
         try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
+            if filename != 'dont-delete.txt' and (os.path.isfile(file_path) or os.path.islink(file_path)):
                 os.unlink(file_path)
         except:
             pass

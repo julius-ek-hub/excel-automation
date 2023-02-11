@@ -86,6 +86,20 @@ def to_excel(path):
     tmp_path = resource_path('__tmp__\\' + name + '.xlsx')
     writer = pd.ExcelWriter(tmp_path)
     csv.to_excel(writer, index=False)
+    # writer.save()
+    writer.close()
+    return tmp_path
+
+def to_csv(path):
+    splitted = path.split('/')
+    name_with_ext = splitted[len(splitted) - 1]
+    if name_with_ext.endswith('.xlsx'):
+        return path
+    name = name_with_ext.split('.')[0]
+    csv = pd.read_csv(path)
+    tmp_path = resource_path('__tmp__\\' + name + '.xlsx')
+    writer = pd.ExcelWriter(tmp_path)
+    csv.to_excel(writer, index=False)
     writer.save()
     return tmp_path
 

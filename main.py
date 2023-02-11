@@ -10,7 +10,13 @@ from collector import Collector
 def main():
     os.system('cls')
 
-    print_bound('EXCEL AUTOMATION v1.0.0 by Julius Ekane - julius.ekane@beaconred.ae, \n\nReach out for any issues incurred.')
+    print_bound("""
+EXCEL AUTOMATION v1.0.0 by Julius Ekane.\n\n
+Try to make sure the necessary column names exist in both files for the best result.
+Enter --r anytime to open the source code repo on github
+Enter --x anytime to exit
+Reach out if any issue -> julius.ekane@beaconred.ae.
+""")
 
     col = Collector()
 

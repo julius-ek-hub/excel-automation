@@ -160,10 +160,10 @@ class Scanner:
             time_diff = str('%2.f' % time_diff) + ' seconds(s)'
 
         print_bound('SCANNING AND UPDATE COMPLETE! (Cells updated =  ' + str(self.total_update) + ', New vulnerabilities = ' + str(self.total_new) + ', Time spent = ' + time_diff + ')')
+        del_tmp_files()
 
     def save(self, path):
         path = path + '.xlsx'
         print('Saving to ', path, ' ....')
         self.workbook_ms.save(path)
-        del_tmp_files()
         print('Done!')

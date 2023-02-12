@@ -52,63 +52,84 @@ class Scanner:
         self.ss_plugin_column = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label=column_names['Plugin'], sheet_name='Scan sheet')
 
 
-    def check_master_sheet_with_scan_sheet(self):
+    def check_mastersheet_with_scansheet(self):
 
-        for msRow in self.get_column_data(sheet=self.ms, column=self.ms_plugin_column):
+        for ms_row in self.get_column_data(sheet=self.ms, column=self.ms_plugin_column):
 
-            ms_host_value_num = str(msRow.row)
-            ms_plugin_value = msRow.value
-            ms_host_value = self.ms[self.ms_host_column + ms_host_value_num].value
+            ms_row_str = str(ms_row.row)
+            ms_plugin_value = ms_row.value
+            ms_host_cell_address = self.ms_host_column + ms_row_str
+            ms_plugin_address = self.ms_plugin_column + ms_row_str
+            ms_host_value = self.ms[ms_host_cell_address].value
 
             host_and_plugin_matched = False
 
             for ssRow in self.get_column_data(sheet=self.ss, column=self.ss_plugin_column):
 
-                ss_row_num = str(ssRow.row)
+                ss_host_row = str(ssRow.row)
                 ss_plugin_value = ssRow.value
-                ss_host_value = self.ss[self.ss_host_column + ss_row_num].value
+                ss_host_address = self.ss_host_column + ss_host_row
+                ss_plugin_address = self.ss_plugin_column + ss_host_row
+                ss_host_value = self.ss[ss_host_address].value
 
                 if (ms_plugin_value == ss_plugin_value and ms_host_value == ss_host_value):
                     (host_and_plugin_matched) = True
                     break
 
-            ms_status_cell = self.ms[self.ms_status_column + ms_host_value_num]
-            ms_ncf_cell = self.ms[self.ms_ncf_column + ms_host_value_num]
-            ms_sd_cell = self.ms[self.ms_date_column + ms_host_value_num]
+            ms_status_cell = self.ms[self.ms_status_column + ms_row_str]
+            ms_ncf_cell = self.ms[self.ms_ncf_column + ms_row_str]
+            ms_sd_cell = self.ms[self.ms_date_column + ms_row_str]
 
             cf = 'Carried Forward'
             patched = 'Patched'
 
-            if (host_and_plugin_matched):
-                if not re.search(cf, str(ms_status_cell.value).strip(), re.IGNORECASE):
-                    ms_status_cell.value = cf
-                    self.total_update = self.total_update + 1
-                    print('Status (' + self.ms_status_column + ms_host_value_num + ') updated to ' + cf)
+            def reason(sufix: str = ' does not match any in SS.'):
+                   return str(
+                        ' because..\n[MS: Host (' + 
+                        ms_host_cell_address + ') = ' + str(ms_host_value) + 
+                        ', Plugin (' + ms_plugin_address + 
+                        ') = ' + str(ms_plugin_value) + ']' + sufix
+                    )
 
+            if (host_and_plugin_matched):
                 if not re.search(cf, str(ms_ncf_cell.value).strip(), re.IGNORECASE):
                     ms_ncf_cell.value = cf
                     self.total_update = self.total_update + 1
-                    print('New/' + cf + ' (' + self.ms_ncf_column + ms_host_value_num + ') updated to ' + cf)
+                    print(
+                        'MS New/' + cf + ' (' + self.ms_ncf_column + ms_row_str + 
+                        ') updated to \'' + cf + '\'' + reason(' matches with\n[SS: Host (' + 
+                        ss_host_address + ') = ' + str(ss_host_value) + 
+                        ', Plugin (' + ss_plugin_address + 
+                        ') = ' + str(ss_plugin_value) + ']'
+                        ))
 
             else:
                 if self.scan_date != str(ms_sd_cell.value).strip():
                     ms_sd_cell.value = self.scan_date
                     self.total_update = self.total_update + 1
-                    print('Date (' + self.ms_date_column + ms_host_value_num + ') updated to ' + self.scan_date)
+                    print(
+                        'MS Date (' + self.ms_date_column + ms_row_str  + 
+                        ') updated to \'' + self.scan_date + '\'' + reason()
+                    )
 
                 if not re.search(patched, str(ms_status_cell.value).strip(), re.IGNORECASE):
                     ms_status_cell.value = patched
                     self.total_update = self.total_update + 1
-                    print('Status (' + self.ms_status_column + ms_host_value_num + ') updated to Patched')
+                    print(
+                        'MS Status (' + self.ms_status_column + ms_row_str  + 
+                        ') updated to \'Patched\'' + reason()
+                    )
 
 
-    def check_scan_sheet_with_master_sheet(self):
+    def check_scansheet_with_mastersheet(self):
         
-        for ssRow in self.get_column_data(sheet=self.ss, column=self.ms_plugin_column):
+        for ss_row in self.get_column_data(sheet=self.ss, column=self.ms_plugin_column):
 
-            ss_row_num = str(ssRow.row)
-            ss_plugin_value = ssRow.value
-            ss_host_value = self.ss[self.ss_host_column + ss_row_num].value
+            ss_row_str = str(ss_row.row)
+            ss_plugin_value = ss_row.value
+            ss_plugin_address = self.ms_plugin_column  + ss_row_str
+            ss_host_address = self.ss_host_column + ss_row_str
+            ss_host_value = self.ss[ss_host_address].value
 
             host_and_plugin_exists = False
 
@@ -125,7 +146,11 @@ class Scanner:
             if host_and_plugin_exists:
                 continue
             else:
-                print('New vulnerability found!')
+                print(
+                    'New vulnerability detected because... \nSS [Host (' + 
+                    ss_host_address + ') = ' + str(ss_host_value) + ', Plugin (' + 
+                    ss_plugin_address + ') = ' + str(ss_plugin_value) + '] did not match any in MS'
+                )
                 print('[Updating]: Adding new vulnerability to mastersheet')
                 ms_last_empty_row = str(len(self.ms['A']) + 1)
 
@@ -146,13 +171,13 @@ class Scanner:
                     ms_column = self.get_column_by_all_means(sheet=self.ms, key=n, label=column_names[n], default_cols=self.ms_default_cols)
                     if (not ss_column):
                         continue
-                    self.ms[ms_column + ms_last_empty_row].value = self.ss[ss_column + ss_row_num].value
+                    self.ms[ms_column + ms_last_empty_row].value = self.ss[ss_column + ss_row_str].value
             print('[Update]: Added new vulnerability to mastersheet (row ' + ms_last_empty_row + ')')
             self.total_new = self.total_new + 1
 
     def scan(self):
 
-        print_bound('SCANNING & UPDATING............')
+        print('\nOn it......\n')
 
         time_start = time.time()
 
@@ -177,11 +202,11 @@ class Scanner:
 
         # Check mastersheet with scansheet
         print('[Scanning & updating]: Mastersheet with scansheet.....')
-        self.check_master_sheet_with_scan_sheet()
+        self.check_mastersheet_with_scansheet()
 
-        # Check scansheet with mastersheet
+        # Check scansheet with mastersheet for new vulnerabilities
         print('[Scanning for new vulnerabilities]: Scansheet with mastersheet.....')
-        self.check_scan_sheet_with_master_sheet()
+        self.check_scansheet_with_mastersheet()
 
         time_stop = time.time()
         time_diff = time_stop - time_start
@@ -191,15 +216,20 @@ class Scanner:
         else:
             time_diff = str('%2.f' % time_diff) + ' seconds(s)'
 
-        print_bound('SCANNING AND UPDATE COMPLETE! (Cells updated =  ' + str(self.total_update) + ', New vulnerabilities = ' + str(self.total_new) + ', Time spent = ' + time_diff + ')', 110)
+        print_bound('SCANNING AND UPDATE COMPLETE! (Total cells updated =  ' + str(self.total_update) + ', New vulnerabilities added = ' + str(self.total_new) + ', Time spent = ' + time_diff + ')', 120)
         del_tmp_files()
 
-    def save(self, path):
-        _path = path + '.xlsx'
-        print('Saving to ', _path, ' ....')
-        self.workbook_ms.save(_path)
-        try:
+    def save(self, path: str):
+
+        print('Saving to ' + path + ' ....')
+
+        if(os.path.exists(path)):
             os.unlink(path)
+        self.workbook_ms.save(path)
+
+        # Sometimes, an additional invalid file with no extension is created. So...
+        try:
+            os.unlink(path.replace('.xlsx', ''))
         except:
             pass
         print('Done!')

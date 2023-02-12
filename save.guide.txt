@@ -1,0 +1,7 @@
+
+Location to save updated mastersheet
+----------------------------------------
+Type the complete path including the new name for the file. Eg C:/Users/Name/Desktop/new-name
+OR just the name to save in the same location with selected mastersheet. Eg new-name
+OR --rp to replace original master sheet
+OR hit enter with no input to open file dialog to choose file path: 

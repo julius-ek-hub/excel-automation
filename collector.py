@@ -1,4 +1,4 @@
-import os
+import os, sys
 from validator import *
 from utils import _dir_, sub_process, convert_bytes, _input_
 
@@ -9,7 +9,6 @@ class Collector:
 
         path = _input_('\nFull path to ' + name + ' (or press enter without typing, to open file dialog): ')
         path = ''.join(path.split('"')).strip()
-        if path.lower() == '--x': return exit()
 
         if not path:
             path = sub_process('open', 'Select ' + name)
@@ -25,7 +24,6 @@ class Collector:
 
         new_ms_name = _input_(sufix + 'Type new filename and/or press Enter to save updated master sheet: ')
         new_ms_name = ''.join(new_ms_name.split('"')).strip()
-        if new_ms_name.lower() == '--x': return exit()
 
         if not new_ms_name:
             new_ms_name = default
@@ -41,7 +39,6 @@ class Collector:
 
     def get_text(self, name: str, default: str, validator):
         value = _input_('\n' + name + ' (or press enter without typing, to use ' + default + '): ')
-        if value.lower() == '--x': return exit()
 
         if not value:
             value = default

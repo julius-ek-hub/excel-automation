@@ -1,4 +1,4 @@
-import re, pandas as pd, subprocess, sys, os
+import re, pandas as pd, subprocess, sys, os, webbrowser
 
 column_names = {
     'Plugin': 'Plugin',
@@ -44,7 +44,14 @@ def convert_bytes(num):
         num /= 1024.0
 
 def _input_ (title):
-        return input(title).strip()
+        value = input(title).strip()
+        test_value = value.lower()
+        if test_value == '--x':
+            sys.exit()
+        if test_value == '--r':
+            webbrowser.open('https://github.com/julius-ek-hub/excel-automation')
+            return _input_(title)
+        return value
 
 def get_column(sheet, title):
     for col in sheet.iter_cols(1, sheet.max_column):
@@ -88,19 +95,6 @@ def to_excel(path):
     csv.to_excel(writer, index=False)
     # writer.save()
     writer.close()
-    return tmp_path
-
-def to_csv(path):
-    splitted = path.split('/')
-    name_with_ext = splitted[len(splitted) - 1]
-    if name_with_ext.endswith('.xlsx'):
-        return path
-    name = name_with_ext.split('.')[0]
-    csv = pd.read_csv(path)
-    tmp_path = resource_path('__tmp__\\' + name + '.xlsx')
-    writer = pd.ExcelWriter(tmp_path)
-    csv.to_excel(writer, index=False)
-    writer.save()
     return tmp_path
 
 def del_tmp_files():

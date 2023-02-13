@@ -223,7 +223,7 @@ class Scanner:
         else:
             time_diff = str('%2.f' % time_diff) + ' seconds(s)'
 
-        print_bound('SCANNING AND UPDATE COMPLETE!\n\nTotal cells updated =  ' + str(self.total_update) + '\nNew vulnerabilities added = ' + str(self.total_new) + '\nTime spent = ' + time_diff + ')', 30, 'success')
+        print_bound('SCANNING AND UPDATE COMPLETE!\n\nTotal cells updated =  ' + str(self.total_update) + '\nNew vulnerabilities added = ' + str(self.total_new) + '\nTime spent = ' + time_diff, 40, 'success')
         del_tmp_files()
 
     def save(self, path: str):

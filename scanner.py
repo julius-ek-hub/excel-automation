@@ -1,11 +1,13 @@
 import openpyxl as ex, re, time, os
-from utils import to_excel, print_bound, del_tmp_files, column_names, _input_
+from utils import to_excel, print_bound, del_tmp_files, column_names, _input_, cprint
 
 class Scanner:
-    def __init__(self, ss_path, ms_path, scan_date, entity, vulnerability_param):
+    def __init__(self, ss_path, ms_path, scan_date, entity, vulnerability_param, ms_target_sheet, ss_target_sheet):
         self.ss_path = ss_path
         self.ms_path = ms_path
         self.scan_date =scan_date 
+        self.ms_target_sheet = ms_target_sheet
+        self.ss_target_sheet = ss_target_sheet
         self.entity = entity 
         self.vulnerability_param = vulnerability_param
         self.ms_default_cols = column_names
@@ -40,7 +42,7 @@ class Scanner:
 
     def get_columns(self):
 
-        print('Identifying columns....')
+        cprint('Identifying columns....')
 
         self.ms_host_column = self.get_column_by_all_means(sheet=self.ms, key='Host', default_cols=self.ms_default_cols, label=column_names['Host'])
         self.ms_plugin_column = self.get_column_by_all_means(sheet=self.ms, key='Plugin', default_cols=self.ms_default_cols, label=column_names['Plugin'])
@@ -151,7 +153,7 @@ class Scanner:
                     ss_host_address + ') = ' + str(ss_host_value) + ', Plugin (' + 
                     ss_plugin_address + ') = ' + str(ss_plugin_value) + '] did not match any in MS'
                 )
-                print('[Updating]: Adding new vulnerability to mastersheet')
+                cprint('[Updating]: Adding new vulnerability to mastersheet')
                 ms_last_empty_row = str(len(self.ms['A']) + 1)
 
                 ms_vp_column = self.get_column_by_all_means(sheet=self.ms, key='VP', label=column_names['VP'], default_cols=self.ms_default_cols)
@@ -172,40 +174,45 @@ class Scanner:
                     if (not ss_column):
                         continue
                     self.ms[ms_column + ms_last_empty_row].value = self.ss[ss_column + ss_row_str].value
-            print('[Update]: Added new vulnerability to mastersheet (row ' + ms_last_empty_row + ')')
+            cprint('[Update]: Added new vulnerability to mastersheet (row ' + ms_last_empty_row + ')', 'success')
             self.total_new = self.total_new + 1
 
     def scan(self):
 
-        print('\nOn it......\n')
+        cprint('\nOn it......\n')
 
         time_start = time.time()
 
         ms_path = to_excel(path=self.ms_path)
         ss_path = to_excel(path=self.ss_path)
 
-        print('Loading Mastersheet.....')
+        cprint('Loading Mastersheet.....')
         self.workbook_ms = ex.load_workbook(ms_path)
-        print('Done!')
+        cprint('Done!', 'success')
 
-        print('Loading Scansheet.....')
+        cprint('Loading Scansheet.....')
         workbook_ss = ex.load_workbook(ss_path)
-        print('Done!')
+        cprint('Done!', 'success')
 
         self.ss = workbook_ss.active
         self.ms = self.workbook_ms.active
 
+        if self.ms_target_sheet:
+            self.ms = self.workbook_ms[self.ms_target_sheet]
+        if self.ss_target_sheet:
+            self.ss = self.workbook_ss[self.ss_target_sheet]
+
         # Identify columns
         self.get_columns()
 
-        print('Done!')
+        cprint('Done!', 'success')
 
         # Check mastersheet with scansheet
-        print('[Scanning & updating]: Mastersheet with scansheet.....')
+        cprint('[Scanning & updating]: Mastersheet with scansheet.....')
         self.check_mastersheet_with_scansheet()
 
         # Check scansheet with mastersheet for new vulnerabilities
-        print('[Scanning for new vulnerabilities]: Scansheet with mastersheet.....')
+        cprint('[Scanning for new vulnerabilities]: Scansheet with mastersheet.....')
         self.check_scansheet_with_mastersheet()
 
         time_stop = time.time()
@@ -216,12 +223,12 @@ class Scanner:
         else:
             time_diff = str('%2.f' % time_diff) + ' seconds(s)'
 
-        print_bound('SCANNING AND UPDATE COMPLETE! (Total cells updated =  ' + str(self.total_update) + ', New vulnerabilities added = ' + str(self.total_new) + ', Time spent = ' + time_diff + ')', 120)
+        print_bound('SCANNING AND UPDATE COMPLETE!\n\nTotal cells updated =  ' + str(self.total_update) + '\nNew vulnerabilities added = ' + str(self.total_new) + '\nTime spent = ' + time_diff + ')', 30, 'success')
         del_tmp_files()
 
     def save(self, path: str):
 
-        print('Saving to ' + path + ' ....')
+        cprint('Saving to ' + path + ' ....')
 
         if(os.path.exists(path)):
             os.unlink(path)
@@ -232,4 +239,4 @@ class Scanner:
             os.unlink(path.replace('.xlsx', ''))
         except:
             pass
-        print('Done!')
+        cprint('Done!', 'success')

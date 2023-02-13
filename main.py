@@ -2,7 +2,7 @@ import os, webbrowser, traceback, sys, datetime
 
 from validator import *
 from scanner import Scanner
-from utils import _input_, print_bound, resource_path
+from utils import _input_, print_bound, resource_path, cprint
 from collector import Collector
 
 
@@ -24,15 +24,22 @@ def runProgram():
 
         ms_path = col.get_path_to_open('Master sheet')
         ss_path = col.get_path_to_open('Scan sheet')
+
+        print_bound('Choose target sheets, Leave as None if the file has only one sheet or\n you want to use the active sheet (usually the first)')
+        ms_target_sheet = col.get_text('Master sheet target', default=None, validator=target_sheet_is_ok)
+        ss_target_sheet = col.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok)
+        
         scan_date = col.get_text('Scan date in DD/MM/YY', default=datetime.datetime.today().strftime('%d/%m/%Y'), validator=scan_date_is_ok)
         entity = col.get_text('Entity', default='EDGE', validator=entity_is_ok)
         vulnerability_param = col.get_text('Vulnerability parameter', default='Internal', validator=vp_is_ok)
 
-        confirm = _input_('\nConfirm!\n------------------\nMaster sheet: ' + ms_path + '\nScan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\nCorrect? n = No, anything else = Yes: ')
+        cprint('\nConfirm!\n------------------\n')
+        cprint('Master sheet: ' + ms_path + '\nScan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\n', 'success')
+        confirm = _input_('Correct? n = No, anything else = Yes: ')
         if confirm.lower() == 'n':
             return runProgram()
 
-        scanner = Scanner(ss_path, ms_path, scan_date, entity, vulnerability_param)
+        scanner = Scanner(ss_path, ms_path, scan_date, entity, vulnerability_param, ms_target_sheet, ss_target_sheet)
         scanner.scan()
 
         if scanner.total_update == 0 and scanner.total_new == 0:
@@ -41,11 +48,11 @@ def runProgram():
 
         scanner.save(col.get_path_to_save(default=ms_path, ms_path=ms_path))
 
-        print_bound('ALL GOOD!!', 20)
+        print_bound('ALL GOOD!!', 20, type='success')
 
         confirm_restart()
     except Exception as e:
-        print_bound('\nAn error occured, please try again.\n'+ str(e) +'\nIf proplem persists, enter --e to send me an email with the error trace.')
+        print_bound('\nAn error occured, please try again.\n'+ str(e) +'\nIf proplem persists, enter --e to send me an email with the error trace.', type='error')
 
         inp = _input_('Hit enter to start over or --e to send error: ')
         if inp.lower() == '--e':

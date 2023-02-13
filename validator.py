@@ -17,6 +17,9 @@ def entity_is_ok(value: str):
 def vp_is_ok(value: str):
     return value.lower() in ['internal', 'external']
 
+def target_sheet_is_ok(value):
+    return True
+
 def sheet_path_open_is_ok(path: str):
     return os.path.isfile(path) and (path.endswith('.xlsx') or path.endswith('.csv')) and os.stat(path).st_size > 0
 

@@ -1,6 +1,6 @@
 import os
 from validator import *
-from utils import _dir_, sub_process, convert_bytes, _input_, resource_path
+from utils import _dir_, sub_process, convert_bytes, _input_, resource_path, cprint
 
 
 class Collector:
@@ -8,17 +8,16 @@ class Collector:
     def get_path_to_open(self, name: str):
 
         path = _input_('\nFull path to ' + name + ' (or hit Enter with no input to open file dialog): ')
-        path = path.replace('"', '').replace('\\', '/').strip()
 
         if not path:
-            path = sub_process('open', 'Select ' + name)
+            path = sub_process('open')
         if not sheet_path_open_is_ok(path):
-            print(path, ' --> Invalid file (' + name + '), try another.')
+            cprint(path + ' --> Invalid file (' + name + '), try another.', 'error')
             return self.get_path_to_open(name)
         else:
             size = os.stat(path).st_size
-            print(path, '--> OK (' + convert_bytes(size) + ')')
-            return path.replace('\\', '/')
+            cprint(path + ' --> OK (' + convert_bytes(size) + ')', 'success')
+            return path
 
     def get_path_to_save(self, default: str = '', sufix: str ='', ms_path: str = ''):
 
@@ -32,7 +31,7 @@ class Collector:
             new_ms_name = _dir_(ms_path) + '/' + new_ms_name
 
         if not new_ms_name:
-            new_ms_name = sub_process('save', 'Save updated master sheet as', ms_path)
+            new_ms_name = sub_process('save')
 
         if not sheet_path_save_is_ok(new_ms_name):
             return self.get_path_to_save(default, 'Failed to save!\n', ms_path)
@@ -46,13 +45,13 @@ class Collector:
 
 
     def get_text(self, name: str, default: str, validator):
-        value = _input_('\n' + name + ' (or hit Enter with no input to use ' + default + '): ')
+        value = _input_('\n' + name + ' (or hit Enter with no input to use ' + str(default) + '): ')
 
         if not value:
             value = default
         if not validator(value):
-            print(value, ' --> Invalid! ' + name + ', try again.')
+            cprint(str(value) + ' --> Invalid! ' + name + ', try again.', 'error')
             return self.get_text(name, default, validator)
         else:
-            print(value, '--> OK')
+            cprint(str(value) + ' --> OK', 'success')
             return value

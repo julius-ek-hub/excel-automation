@@ -34,8 +34,8 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-def sub_process(type='open', title='Select Master sheet', initial=''):
-    return subprocess.run(['python', resource_path('file.dialog.py'), '--title=' + title, '--type=' + type, '--initial=' + initial], capture_output=True, text=True).stdout.strip()
+def sub_process(type='open'):
+    return subprocess.run([resource_path(type + '.cmd')], capture_output=True, text=True).stdout.replace('"', '').replace('\\', '/').strip()
 
 def convert_bytes(num):
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
@@ -54,10 +54,10 @@ def _input_ (title):
         return value
 
 
-def print_bound(text: str, lines: int=100):
-        print('\n' + '-'*lines)
-        print(text)
-        print('-'*lines + '\n')
+def print_bound(text: str, lines: int=100, type='info'):
+        cprint('\n' + '-'*lines, type)
+        cprint(text, type)
+        cprint('-'*lines + '\n', type)
 
 def _dir_(path: str):
     split = path.split('/')
@@ -87,3 +87,12 @@ def del_tmp_files():
                 os.unlink(file_path)
         except:
             pass
+
+def cprint(value: str = '', type: str = 'info'):
+    print({
+        "error": "\033[91m {}\033[00m",
+        "info": "\033[96m {}\033[00m",
+        "success": "\033[92m {}\033[00m",
+        "warn": "\033[93m {}\033[00m"
+    }[type].format(value))
+

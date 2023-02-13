@@ -3,11 +3,12 @@ EXCEL AUTOMATION v1.0.0 by Julius Ekane.
 
 Update one file - Mastersheet (MS) against another - Scansheet (SS)
 
-Some column names in the mastersheet were marked required.
-Only use Excel and CSV files.
-CSV files will be converted to Excel.
-If Master sheet file is CSV, the updated version will be in Excel format.
-Enter --r anytime to open the source code repo with documentaion on github
-Enter --x anytime to exit
-Make sure files to use are not open while program is running.
-Reach out if any issue or suggestion -> julius.ekane@beaconred.ae.
+- Some column names in the mastersheet were marked required.
+- Only use Excel and CSV files.
+- CSV files will be converted to Excel.
+- If Master sheet file is CSV, the updated version will be in Excel format.
+- You can make the program faster by removing blanc rows from files.
+- Enter --r anytime to open the source code repo with documentaion on github.
+- Enter --x anytime to close the program.
+- Make sure files to use are not open while program is running.
+- Reach out if any issue or suggestion -> julius.ekane@beaconred.ae.

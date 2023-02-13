@@ -43,7 +43,7 @@ def convert_bytes(num):
             return "%3.1f %s" % (num, x)
         num /= 1024.0
 
-def _input_ (title):
+def _input_ (title = ''):
         value = input(title).strip()
         test_value = value.lower()
         if test_value == '--x':

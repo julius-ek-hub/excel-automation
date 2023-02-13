@@ -49,6 +49,7 @@ class Scanner:
         self.ms_date_column = self.get_column_by_all_means(sheet=self.ms, key='Date', default_cols=self.ms_default_cols, label=column_names['Date'])
         self.ms_status_column = self.get_column_by_all_means(sheet=self.ms, key='Status', default_cols=self.ms_default_cols, label=column_names['Status'])
         self.ms_ncf_column = self.get_column_by_all_means(sheet=self.ms, key='NCF', default_cols=self.ms_default_cols, label=column_names['NCF'])
+        self.ms_vp_column = self.get_column_by_all_means(sheet=self.ms, key='VP', default_cols=self.ms_default_cols, label=column_names['VP'])
 
         self.ss_host_column = self.get_column_by_all_means(sheet=self.ss, key='Host', default_cols=self.ss_default_cols, label=column_names['Host'], sheet_name='Scan sheet')
         self.ss_plugin_column = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label=column_names['Plugin'], sheet_name='Scan sheet')
@@ -64,12 +65,16 @@ class Scanner:
             ms_plugin_address = self.ms_plugin_column + ms_row_str
             ms_host_value = self.ms[ms_host_cell_address].value
 
+            # If vulnerabilty parameter is not what user provided, then skip.
+            if not re.search(self.vulnerability_param, str(self.ms[self.ms_vp_column + ms_row_str].value).strip(), re.IGNORECASE):
+                continue
+
             host_and_plugin_matched = False
 
-            for ssRow in self.get_column_data(sheet=self.ss, column=self.ss_plugin_column):
+            for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_plugin_column):
 
-                ss_host_row = str(ssRow.row)
-                ss_plugin_value = ssRow.value
+                ss_host_row = str(ss_row.row)
+                ss_plugin_value = ss_row.value
                 ss_host_address = self.ss_host_column + ss_host_row
                 ss_plugin_address = self.ss_plugin_column + ss_host_row
                 ss_host_value = self.ss[ss_host_address].value
@@ -156,10 +161,9 @@ class Scanner:
                 cprint('[Updating]: Adding new vulnerability to mastersheet')
                 ms_last_empty_row = str(len(self.ms['A']) + 1)
 
-                ms_vp_column = self.get_column_by_all_means(sheet=self.ms, key='VP', label=column_names['VP'], default_cols=self.ms_default_cols)
                 ms_entity_column = self.get_column_by_all_means(sheet=self.ms, key='Entity', label=column_names['Entity'], default_cols=self.ms_default_cols)
 
-                self.ms[ms_vp_column + ms_last_empty_row].value = self.vulnerability_param
+                self.ms[self.ms_vp_column + ms_last_empty_row].value = self.vulnerability_param
                 self.ms[self.ms_status_column + ms_last_empty_row].value = 'pending'
                 self.ms[self.ms_date_column + ms_last_empty_row].value = self.scan_date
                 self.ms[ms_entity_column + ms_last_empty_row].value = self.entity

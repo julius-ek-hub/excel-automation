@@ -6,17 +6,6 @@ def scan_date_is_ok(date: str):
     except:
         return False
 
-def entity_is_ok(value: str):
-    return value.lower() in [
-        'edge', 
-        'beacon red',
-        'katim',
-        'sign4l'
-    ]
-
-def vp_is_ok(value: str):
-    return value.lower() in ['internal', 'external']
-
 def target_sheet_is_ok(value):
     return True
 

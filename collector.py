@@ -55,3 +55,22 @@ class Collector:
         else:
             cprint(str(value) + ' --> OK', 'success')
             return value
+
+    def get_text_from_options(self, options, label):
+
+        print('\n' + label + ', type only the letter that corresponds to your choice. (or hit Enter with no input to use ' + options['a'] + '): ')
+        for _key in options:
+            print(_key + ' = ' + options[_key]) 
+
+        key = _input_().lower()
+
+        if not key:
+            key = 'a'
+        value = options.get(key)
+
+        if not value:
+            cprint(str(value) + ' --> Invalid! ' + key + ' does not match any option.', 'error')
+            return self.get_text_from_options(options, label)
+        else:
+            cprint(value + ' --> OK', 'success')
+            return value

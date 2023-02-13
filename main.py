@@ -5,7 +5,6 @@ from scanner import Scanner
 from utils import _input_, print_bound, resource_path, cprint
 from collector import Collector
 
-
 def confirm_restart():
     confirm = _input_('Would you like to restart the process? n = No, anything else = Yes: ')
     if confirm.lower() == 'n':
@@ -30,8 +29,17 @@ def runProgram():
         ss_target_sheet = col.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok)
         
         scan_date = col.get_text('Scan date in DD/MM/YY', default=datetime.datetime.today().strftime('%d/%m/%Y'), validator=scan_date_is_ok)
-        entity = col.get_text('Entity', default='EDGE', validator=entity_is_ok)
-        vulnerability_param = col.get_text('Vulnerability parameter', default='Internal', validator=vp_is_ok)
+        entity = col.get_text_from_options({
+            "a": "EDGE",
+            "b": "ADSB",
+            "c": "KATIM",
+            "d": "BEACON RED",
+            "e": "SIGN4L"
+        }, 'Entity')
+        vulnerability_param = col.get_text_from_options({
+            "a": "Internal",
+            "b": "External",
+        }, 'Vulnerability parameter')
 
         cprint('\nConfirm!\n------------------\n')
         cprint('Master sheet: ' + ms_path + '\nScan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\n', 'success')

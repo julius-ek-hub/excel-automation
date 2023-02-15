@@ -1,8 +1,8 @@
 import pandas as pd, subprocess, sys, os, webbrowser
 
 column_names = {
-    'Plugin': 'Plugin',
-    'VP': 'Vulnerability Parameter',
+    'Plugin': 'Plugin|Plugin ID|ID',
+    'VP': 'Vulnerability Parameter|internal/external/Scan type',
     'CVE': 'CVE',
     'PN': 'Plugin Name',
     'Status': 'Status',
@@ -13,11 +13,11 @@ column_names = {
     'SBD': 'SLA Breached / Day',
     'Severity': 'Severity',
     'Entity': 'Entity',
-    'Host': 'Host|(Ip Address)',
+    'Host': 'Host|Ip Address',
     'NBN': 'NetBIOS Name',
     'Description': 'Description',
     'Solution': 'Solution',
-    'DD': '(Date discovered)|(First Discovered)',
+    'DD': 'Date discovered|First Discovered',
     'CCD': 'Closing/Current Date',
     'SBDC': 'SLA Breached / Day Count'
 }
@@ -96,3 +96,12 @@ def cprint(value: str = '', type: str = 'info'):
         "warn": "\033[93m {}\033[00m"
     }[type].format(value))
 
+
+
+def reason(sufix: str = ' does not match any in SS.', ms_host_cell_address='', ms_host_value='', ms_plugin_address='', ms_plugin_value=''):
+        return str(
+            ' because..\n[MS: Host (' + 
+            ms_host_cell_address + ') = ' + str(ms_host_value) + 
+            ', Plugin (' + ms_plugin_address + 
+            ') = ' + str(ms_plugin_value) + ']' + sufix
+        )

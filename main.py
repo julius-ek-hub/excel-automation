@@ -1,13 +1,13 @@
-import os, webbrowser, traceback, sys, datetime
+import os, webbrowser, traceback, sys, openpyxl as ope, time
 
 from validator import *
 from scanner import Scanner
-from utils import _input_, print_bound, resource_path, cprint
+from utils import _input_, print_bound, resource_path, cprint, to_excel, del_tmp_files
 from collector import Collector
 
 def confirm_restart():
     confirm = _input_('Would you like to restart the process? n = No, anything else = Yes: ')
-    if confirm.lower() == 'n':
+    if confirm.lower() in ['n', 'no']:
         sys.exit()
     else:
         runProgram()
@@ -22,35 +22,72 @@ def runProgram():
         col = Collector()
 
         ms_path = col.get_path_to_open('Master sheet')
-        ss_path = col.get_path_to_open('Scan sheet')
-
-        print_bound('Choose target sheets, Leave as None if the file has only one sheet or\n you want to use the active sheet (usually the first)')
         ms_target_sheet = col.get_text('Master sheet target', default=None, validator=target_sheet_is_ok)
-        ss_target_sheet = col.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok)
+
+        print_bound('Input scans (As many as you want)')
+        scans = col.collect_scans()
+
+        can_move_to_next_step = False
+
+        while not can_move_to_next_step:
+
+            cprint('\nFinal Confirmation!\n-----------------------')
+
+            scans_str = ''
+
+            for i, val in enumerate(scans):
+                scans_str += '\n\nScan ' + str(i + 1) + '\nScan sheet ' + str(i + 1) + ' path: ' + val['path'] + '\nTarget sheet: ' + str(val['target']) + '\nDate: ' + val['date'] + '\nEntity: ' + val['entity'] + '\nVulnerability parameter: ' + val['vp']
+
+            cprint('Master sheet path: ' + ms_path + '\nTarget sheet: ' + str(ms_target_sheet) + scans_str, 'success')
+
+            confirm = _input_('Correct? n = No, --rm=n = Removes scan number n, eg --rm=1 removes scan 1, anything else = Yes: ').lower()
+            if confirm.lower() in ['n', 'no']:
+                return runProgram()
+            
+            check_rm = confirm.split('--rm=')
+
+            if len(check_rm) == 2:
+                try:
+                    rm_index = int(check_rm[1])
+                    scans.pop(rm_index - 1)
+                    cprint('Scan ' + str(rm_index) + ' removed, scans re-ordered, ', 'success')
+                except Exception as e:
+                    cprint('Failed to delete scan, ' + str(e), 'error')
+            else:
+                can_move_to_next_step = True
+            
         
-        scan_date = col.get_text('Scan date in DD/MM/YY', default=datetime.datetime.today().strftime('%d/%m/%Y'), validator=scan_date_is_ok)
-        entity = col.get_text_from_options({
-            "a": "EDGE",
-            "b": "ADSB",
-            "c": "KATIM",
-            "d": "BEACON RED",
-            "e": "SIGN4L"
-        }, 'Entity')
-        vulnerability_param = col.get_text_from_options({
-            "a": "Internal",
-            "b": "External",
-        }, 'Vulnerability parameter')
+        cprint('\nOn it......\n')
+        cprint('Loading Mastersheet.....')
 
-        cprint('\nConfirm!\n------------------\n')
-        cprint('Master sheet: ' + ms_path + '\nScan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\n', 'success')
-        confirm = _input_('Correct? n = No, anything else = Yes: ')
-        if confirm.lower() == 'n':
-            return runProgram()
+        ms_workbook = ope.load_workbook(to_excel(path=ms_path))
 
-        scanner = Scanner(ss_path, ms_path, scan_date, entity, vulnerability_param, ms_target_sheet, ss_target_sheet)
-        scanner.scan()
+        cprint('Done!', 'success')
 
-        if scanner.total_update == 0 and scanner.total_new == 0:
+                
+        time_start = time.time()
+        total_update = 0
+        total_new = 0
+
+        for i, s in enumerate(scans):
+            scanner = Scanner(s['path'], ms_workbook, s['date'], s['entity'], s['vp'], ms_target_sheet, s['target'], i)
+            scanner.scan()
+            total_update += scanner.total_update
+            total_new += scanner.total_new
+
+        time_stop = time.time()
+        time_diff = time_stop - time_start
+
+        if time_diff > 60:
+            time_diff = str('%2.f' % (time_diff/60.0)) + ' minute(s)'
+        else:
+            time_diff = str('%2.f' % time_diff) + ' seconds(s)'
+
+        print_bound('SCANNING AND UPDATE COMPLETE!\n\nTotal cells updated =  ' + str(total_update) + '\nNew vulnerabilities added = ' + str(total_new) + '\nTime spent = ' + time_diff, 40, 'success')
+        del_tmp_files()
+
+
+        if total_update == 0 and total_new == 0:
             print('No updates or new vulnerabilities were added to the Mastersheet')
             return confirm_restart()
 
@@ -59,6 +96,7 @@ def runProgram():
         print_bound('ALL GOOD!!', 20, type='success')
 
         confirm_restart()
+
     except Exception as e:
         print_bound('\nAn error occured, please try again.\n'+ str(e) +'\nIf proplem persists, enter --e to send me an email with the error trace.', type='error')
 

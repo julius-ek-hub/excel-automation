@@ -1,9 +1,12 @@
 import os
 from validator import *
-from utils import _dir_, sub_process, convert_bytes, _input_, resource_path, cprint
+from utils import _dir_, sub_process, convert_bytes, _input_, resource_path, cprint, print_bound
 
 
 class Collector:
+
+    def __init__(self) -> None:
+        self.scans = []
 
     def get_path_to_open(self, name: str):
 
@@ -38,7 +41,7 @@ class Collector:
 
         new_ms_name = new_ms_name.replace('.xlsx', '') + '.xlsx'
         confirm = _input_('Save to ' + new_ms_name + '? n = No, anything else = Yes: ')
-        if confirm.lower() == 'n':
+        if confirm.lower() in ['n', 'no']:
             return self.get_path_to_save(default=default, ms_path=ms_path)
 
         return new_ms_name
@@ -74,3 +77,63 @@ class Collector:
         else:
             cprint(value + ' --> OK', 'success')
             return value
+        
+    def collect_scans(self):
+
+        new_scan_index = str(len(self.scans) + 1)
+
+        cprint('\nScan ' + new_scan_index + '.\n------------------')
+
+        ss_path = self.get_path_to_open('Scan sheet')
+        ss_target_sheet = self.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok)
+        
+        scan_date = self.get_text('Scan date in DD/MM/YY', default=datetime.datetime.today().strftime('%d/%m/%Y'), validator=scan_date_is_ok)
+        entity = self.get_text_from_options({
+            "a": "EDGE",
+            "b": "ADSB",
+            "c": "ADASI",
+            "d": "BEACON RED",
+            "e": "LAHAB",
+            "f": "NIMR",
+            "g": "D14",
+            "h": "GAL",
+            "i": "HALCON",
+            "j": "EARTH",
+            "k": "AL HOSN",
+            "l": "AL JASOOR",
+            "m": "AL TARIQ",
+            "n": "APT",
+            "o": "EPI",
+            "p": "CARACAL",
+            "q": "KNOWLEDGE POINT",
+            "r": "EDIC",
+            "s": "AMMROC",
+            "t": "HORIZON",
+            "u": "JAHEZIYA",
+            "v": "SIM",
+        }, 'Entity')
+        vulnerability_param = self.get_text_from_options({
+            "a": "Internal",
+            "b": "External",
+        }, 'Vulnerability parameter')
+
+        cprint('\nConfirm scan ' + new_scan_index + '!\n------------------')
+        cprint('Scan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\n', 'success')
+
+        confirm = _input_('Correct? n = No, --done = Accepts and begins scanning. anything else = Accepts and moves to next scan: ').lower()
+
+        if confirm in ['n', 'no']:
+            return self.collect_scans()
+        
+        self.scans.append({
+            "path": ss_path,
+            "target": ss_target_sheet,
+            "date": scan_date,
+            "entity": entity,
+            "vp": vulnerability_param
+        })
+
+        if confirm == '--done':
+            return self.scans
+
+        return self.collect_scans()

@@ -1,4 +1,5 @@
-import pandas as pd, subprocess, sys, os, webbrowser
+import pandas as pd, sys, os, webbrowser
+from subprocess import check_output, run
 
 column_names = {
     'Plugin': 'Plugin|Plugin ID|ID',
@@ -35,7 +36,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def sub_process(type='open'):
-    return subprocess.run([resource_path(type + '.cmd')], capture_output=True, text=True).stdout.replace('"', '').replace('\\', '/').strip()
+    return run([resource_path(type + '.bat')], capture_output=True, text=True).stdout.replace('"', '').replace('\\', '/').strip()
 
 def convert_bytes(num):
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
@@ -105,3 +106,6 @@ def reason(sufix: str = ' does not match any in SS.', ms_host_cell_address='', m
             ', Plugin (' + ms_plugin_address + 
             ') = ' + str(ms_plugin_value) + ']' + sufix
         )
+
+
+print(sub_process())

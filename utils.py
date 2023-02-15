@@ -1,11 +1,11 @@
-import pandas as pd, sys, os, webbrowser
-from subprocess import check_output, run
+import pandas as pd, sys, os, webbrowser, subprocess
+from playsound import playsound
 
 column_names = {
-    'Plugin': 'Plugin|Plugin ID|ID',
-    'VP': 'Vulnerability Parameter|internal/external/Scan type',
+    'Plugin': 'Plugin~&~&~Plugin ID',
+    'VP': 'Vulnerability Parameter~&~&~internal/external/Scan type',
     'CVE': 'CVE',
-    'PN': 'Plugin Name',
+    'PN': 'Plugin Name~&~&~Name',
     'Status': 'Status',
     'Date': 'Date',
     'NCF': 'New/Carried forward',
@@ -14,11 +14,11 @@ column_names = {
     'SBD': 'SLA Breached / Day',
     'Severity': 'Severity',
     'Entity': 'Entity',
-    'Host': 'Host|Ip Address',
+    'Host': 'Host~&~&~Ip Address',
     'NBN': 'NetBIOS Name',
     'Description': 'Description',
     'Solution': 'Solution',
-    'DD': 'Date discovered|First Discovered',
+    'DD': 'Date discovered~&~&~First Discovered~&~&~First found',
     'CCD': 'Closing/Current Date',
     'SBDC': 'SLA Breached / Day Count'
 }
@@ -36,7 +36,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def sub_process(type='open'):
-    return run([resource_path(type + '.bat')], capture_output=True, text=True).stdout.replace('"', '').replace('\\', '/').strip()
+    return subprocess.run([resource_path('assets\\' + type + '.bat')], capture_output=True, text=True).stdout.replace('"', '').replace('\\', '/').strip()
 
 def convert_bytes(num):
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
@@ -97,7 +97,11 @@ def cprint(value: str = '', type: str = 'info'):
         "warn": "\033[93m {}\033[00m"
     }[type].format(value))
 
-
+def beep():
+    try:
+        playsound(resource_path('assets\\beep.mp3'))
+    except:
+        pass
 
 def reason(sufix: str = ' does not match any in SS.', ms_host_cell_address='', ms_host_value='', ms_plugin_address='', ms_plugin_value=''):
         return str(
@@ -106,6 +110,3 @@ def reason(sufix: str = ' does not match any in SS.', ms_host_cell_address='', m
             ', Plugin (' + ms_plugin_address + 
             ') = ' + str(ms_plugin_value) + ']' + sufix
         )
-
-
-print(sub_process())

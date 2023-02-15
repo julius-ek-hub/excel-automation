@@ -1,6 +1,6 @@
 import os
 from validator import *
-from utils import _dir_, sub_process, convert_bytes, _input_, resource_path, cprint, print_bound
+from utils import _dir_, sub_process, convert_bytes, _input_, resource_path, cprint
 
 
 class Collector:
@@ -11,6 +11,7 @@ class Collector:
     def get_path_to_open(self, name: str):
 
         path = _input_('\nFull path to ' + name + ' (or hit Enter with no input to open file dialog): ')
+        path = path.replace('"', '').replace('\'', '').replace('\\', '/').strip()
 
         if not path:
             path = sub_process('open')
@@ -24,8 +25,8 @@ class Collector:
 
     def get_path_to_save(self, default: str = '', sufix: str ='', ms_path: str = ''):
 
-        new_ms_name = _input_(sufix + open(resource_path('save.guide.txt'), 'r').read())
-        new_ms_name = new_ms_name.replace('"', '').replace('\\', '/').strip()
+        new_ms_name = _input_(sufix + open(resource_path('help\\save.guide.txt'), 'r').read())
+        new_ms_name = new_ms_name.replace('"', '').replace('\'', '').replace('\\', '/').strip()
 
         if new_ms_name.lower() == '--rp':
             new_ms_name = ms_path
@@ -35,6 +36,9 @@ class Collector:
 
         if not new_ms_name:
             new_ms_name = sub_process('save')
+        
+        if new_ms_name and len(new_ms_name.split(':/')) == 0:
+            new_ms_name = _dir_(ms_path) + '/' + new_ms_name
 
         if not sheet_path_save_is_ok(new_ms_name):
             return self.get_path_to_save(default, 'Failed to save!\n', ms_path)
@@ -47,8 +51,17 @@ class Collector:
         return new_ms_name
 
 
-    def get_text(self, name: str, default: str, validator):
-        value = _input_('\n' + name + ' (or hit Enter with no input to use ' + str(default) + '): ')
+    def get_text(self, name: str, default: str, validator, help=''):
+
+        _help = ''
+        if help:
+            _help = ', Type --h for help.'
+
+        value = _input_('\n' + name + ' (or hit Enter with no input to use ' + str(default) + _help + '): ')
+
+        if help and value.lower() == '--h':
+            print(open(resource_path(help), 'r').read())
+            return self.get_text(name, default, validator, help)
 
         if not value:
             value = default
@@ -85,7 +98,7 @@ class Collector:
         cprint('\nScan ' + new_scan_index + '.\n------------------')
 
         ss_path = self.get_path_to_open('Scan sheet')
-        ss_target_sheet = self.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok)
+        ss_target_sheet = self.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok, help='help\\target.sheet.txt')
         
         scan_date = self.get_text('Scan date in DD/MM/YY', default=datetime.datetime.today().strftime('%d/%m/%Y'), validator=scan_date_is_ok)
         entity = self.get_text_from_options({

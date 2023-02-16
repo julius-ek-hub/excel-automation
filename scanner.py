@@ -97,10 +97,10 @@ class Scanner:
             target_vp = self.vulnerability_param == self.trim(self.ms[self.ms_vp_column + ms_row_str].value)
             target_entity = self.entity == self.trim(self.ms[self.ms_entity_column + ms_row_str].value)
 
-            self.ms_existing_vulnerability_rows.append(ms_row_str)
-
             if not (target_entity and target_vp) or closed:
                 continue
+
+            self.ms_existing_vulnerability_rows.append(ms_row_str)
 
             vulnerability_match = False
 
@@ -128,7 +128,7 @@ class Scanner:
 
                     if not carried_forward:
                         ms_ncf_cell.value = cf
-                        self.total_updates["Newly Carried Forward"] += 1
+                        self.total_updates["Carried Forward"] += 1
                     break
                     
 
@@ -194,9 +194,13 @@ class Scanner:
         self.ms = self.workbook_ms.active
 
         if self.ms_target_sheet:
-            self.ms = self.workbook_ms[self.ms_target_sheet]
+            try:
+                self.ms = self.workbook_ms[self.ms_target_sheet]
+            except Exception as e: raise Exception(str(e) + ' (Mastersheet)')
         if self.ss_target_sheet:
-            self.ss = workbook_ss[self.ss_target_sheet]
+            try:
+                self.ss = workbook_ss[self.ss_target_sheet]
+            except Exception as e: raise Exception(str(e) + ' (Scansheet ' + self.scan_index + ')')
 
         # Identify columns
         self.get_columns()

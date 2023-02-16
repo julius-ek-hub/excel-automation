@@ -29,7 +29,7 @@ def runProgram():
         col = Collector()
 
         ms_path = col.get_path_to_open('Master sheet')
-        ms_target_sheet = col.get_text('Mastersheet target', default=None, validator=target_sheet_is_ok, help='help\\target.sheet.txt')
+        ms_target_sheet = col.get_text('Worksheet target', default=None, validator=lambda v: True, help='help\\target.sheet.txt')
 
         print_bound('Input scans')
         scans = col.collect_scans()
@@ -43,9 +43,9 @@ def runProgram():
             scans_str = ''
 
             for i, val in enumerate(scans):
-                scans_str += '\n\nScan ' + str(i + 1) + '\nPath: ' + val['path'] + '\nTarget sheet: ' + str(val['target']) + '\nDate: ' + val['date'] + '\nEntity: ' + val['entity'] + '\nVulnerability parameter: ' + val['vp']
+                scans_str += '\n\nScan ' + str(i + 1) + '\nPath: ' + val['path'] + '\nTarget worksheet: ' + str(val['target'] if val['target'] else 'Active') + '\nDate: ' + val['date'] + '\nEntity: ' + val['entity'] + '\nVulnerability parameter: ' + val['vp']
 
-            cprint('Master sheet path: ' + ms_path + '\nTarget sheet: ' + str(ms_target_sheet) + scans_str, 'success', lable=False)
+            cprint('Mastersheet\nPath: ' + ms_path + '\nTarget worksheet: ' + str(ms_target_sheet if ms_target_sheet else 'Active') + scans_str, 'success', lable=False)
 
             confirm = col.ask('Correct? n = No, y = Yes, --rm=n = Removes scan n, eg --rm=1 removes scan 1 (default = y): ', lambda v: (v in ['yes', 'no', 'y', 'n', ''] or (len(v.split('--rm=')) == 2 and not v.split('--rm=')[0] and v.split('--rm=')[1].isnumeric)))
             
@@ -66,9 +66,9 @@ def runProgram():
             else:
                 can_move_to_next_step = True
             
-        play_sound = col.ask('\nPlay a sound when your attention is needed? y or Enter = Yes, n = No (default = y): ', lambda ans: ans in ['yes', 'y', '', 'n', 'no']).lower() in ['', 'y', 'yes']
+        play_sound = col.ask('\nMake a beep sound if your attention is needed? y = Yes, n = No (default = y): ', lambda ans: ans in ['yes', 'y', '', 'n', 'no']).lower() in ['', 'y', 'yes']
 
-        cprint('On it......\n')
+        cprint('On it.... You can move on with other things' + (' cuz this might take a while' if len(scans) > 2 else '')  + '\n')
         cprint('Loading Mastersheet.....')
 
         ms_workbook = ope.load_workbook(to_excel(path=ms_path))
@@ -76,7 +76,7 @@ def runProgram():
         cprint('Done!', 'success')
 
         time_start = time.time()
-        total_updates = {"New": 0, "Newly Carried Forward": 0, "Closed": 0}
+        total_updates = {"New": 0, "Carried Forward": 0, "Closed": 0}
 
         for i, s in enumerate(scans):
             scanner = Scanner(s['path'], ms_workbook, s['date'], s['entity'], s['vp'], ms_target_sheet, s['target'], i)
@@ -89,9 +89,9 @@ def runProgram():
         time_diff = time_stop - time_start
 
         if time_diff > 60:
-            time_diff = str('%2.f' % (time_diff/60.0)) + ' minute(s)'
+            time_diff = str(round(time_diff/60, 1)) + ' minute(s)'
         else:
-            time_diff = str('%2.f' % time_diff) + ' seconds(s)'
+            time_diff = str(round(time_diff, 1)) + ' seconds(s)'
 
         total_updates_str = ''
 

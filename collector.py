@@ -17,7 +17,7 @@ class Collector:
 
     def get_path_to_open(self, name: str, sufix=""):
 
-        path = _input_('\nFull path to ' + name + ' or hit Enter with no input to open file dialog. ' + sufix + ': ')
+        path = _input_('\nFull path to ' + name + ' or hit Enter with no input to open file dialog' + sufix + ': ')
         path = path.replace('"', '').replace('\'', '').replace('\\', '/').strip()
 
         if not path:
@@ -64,7 +64,7 @@ class Collector:
         if help:
             _help = ', Type --h for help.'
 
-        value = _input_('\n' + name + ' (or hit Enter with no input to use ' + str(default) + _help + '): ')
+        value = _input_('\n' + name + ' (default = ' + str(default) + _help + '): ')
 
         if help and value.lower() == '--h':
             print(open(resource_path(help), 'r').read())
@@ -81,7 +81,7 @@ class Collector:
 
     def get_text_from_options(self, options, label):
 
-        print('\n' + label + ', type only the letter that corresponds to your choice. (or hit Enter with no input to use ' + options['a'] + '): ')
+        print('\n' + label + ', type only the letter that corresponds to your choice. (default = a): ')
         for _key in options:
             print(_key + ' = ' + options[_key]) 
 
@@ -105,7 +105,7 @@ class Collector:
         cprint('\nScan ' + new_scan_index + '.\n------------------', lable=False)
 
         ss_path = self.get_path_to_open('Scan sheet.', sufix="(Mistakenly pressed enter from previous scan? Just enter a random scan and delete it in the Grand Confirmation)")
-        ss_target_sheet = self.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok, help='help\\target.sheet.txt')
+        ss_target_sheet = self.get_text('Worksheet target', default=None, validator=lambda v: True, help='help\\target.sheet.txt')
         
         scan_date = self.get_text('Scan date in MM/DD/YY', default=datetime.datetime.today().strftime('%m/%d/%Y'), validator=scan_date_is_ok)
         entity = self.get_text_from_options({
@@ -138,9 +138,9 @@ class Collector:
         }, 'Vulnerability parameter')
 
         cprint('\nConfirm scan ' + new_scan_index + '!\n------------------', lable=False)
-        cprint('Scan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\n', 'success', False)
+        cprint('Scan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\nTarget worksheet: ' + str(ss_target_sheet if ss_target_sheet else 'Active') + '\n', 'success', False)
 
-        confirm = self.ask('Correct? n = No, y or Enter = Yes and collect next scan, --done = Yes and move to next stage (default = y): ', lambda ans: ans in ['n', 'no', 'y', 'yes', '--done', ''])
+        confirm = self.ask('Correct? n = No, y = Yes and collect next scan, --done = Yes and move to next stage (default = y): ', lambda ans: ans in ['n', 'no', 'y', 'yes', '--done', ''])
 
         if confirm in ['n', 'no']:
             return self.collect_scans()

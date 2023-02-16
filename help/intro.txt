@@ -1,5 +1,5 @@
 
-EXCEL AUTOMATION v2.0.0 by Julius Ekane.
+VULNERABILITY SCANNER v2.0.0 by Julius Ekane.
 
 Update one file - Mastersheet (MS) against multiple others - Scansheets (SS)
 

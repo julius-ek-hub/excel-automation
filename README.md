@@ -1,8 +1,8 @@
-# Excel Automation
+# VULNERABILITY SCANNER V2.0.0
 
 Only to whom it concerns.
 
-A program that compares a master file with multiple scan files and makes changes on the master file depending on the scan files. Only works for .xlsx and .csv files
+A program that compares one master file with multiple scan files and makes changes on the master file depending on the scan files. Only works for .xlsx and .csv files
 
 [Download](https://github.com/julius-ek-hub/excel-automation/raw/main/dist/auto-excel.exe "Click to download executable") the executable that would run on Windows OS only. (Found in [dist folder](https://github.com/julius-ek-hub/excel-automation/tree/main/dist))
 

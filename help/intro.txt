@@ -6,7 +6,7 @@ Update one file - Mastersheet (MS) against multiple others - Scansheets (SS)
 - Some column names in the mastersheet were marked required.
 - Only use Excel and CSV files.
 - CSV files will be converted to Excel.
-- If Master sheet file is CSV, the updated version will be in Excel format.
+- If Mastersheet is CSV, the updated version will be in Excel format.
 - You can make the program faster by removing blanc rows from files.
 - Enter --r anytime to open the source code repo with documentaion on github.
 - Enter --x anytime to close the program.

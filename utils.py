@@ -1,4 +1,4 @@
-import pandas as pd, sys, os, webbrowser, subprocess
+import pandas as pd, sys, os, webbrowser, subprocess, win32com.client as win32
 from playsound import playsound
 
 column_names = {
@@ -103,3 +103,12 @@ def beep(play_sound):
             playsound(resource_path('assets\\beep.mp3'))
     except:
         pass
+
+def send_error(body, subject):
+    outlook = win32.Dispatch('outlook.application')
+    mail = outlook.CreateItem(0)
+    mail.To = 'julius.ekane@beaconred.ae'
+    mail.Subject = subject
+    mail.HtmlBody = body
+
+    mail.Display(True)

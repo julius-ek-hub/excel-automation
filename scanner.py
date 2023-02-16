@@ -196,7 +196,7 @@ class Scanner:
         if self.ms_target_sheet:
             self.ms = self.workbook_ms[self.ms_target_sheet]
         if self.ss_target_sheet:
-            self.ss = self.workbook_ss[self.ss_target_sheet]
+            self.ss = workbook_ss[self.ss_target_sheet]
 
         # Identify columns
         self.get_columns()

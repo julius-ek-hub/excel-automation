@@ -2,7 +2,7 @@ import os, webbrowser, traceback, sys, openpyxl as ope, time
 
 from validator import *
 from scanner import Scanner
-from utils import _input_, print_bound, resource_path, cprint, to_excel, del_tmp_files, beep
+from utils import _input_, print_bound, resource_path, cprint, to_excel, del_tmp_files, beep, send_error
 from collector import Collector
 
 def confirm_restart(play_sound):
@@ -121,7 +121,7 @@ def runProgram():
         print_bound('\nAn error occured, please try again.\n'+ str(e) +'\nIf proplem persists, enter --e to send me an email with the error trace.', type='error')
         inp = _input_('Hit enter to start over or --e to send error: ')
         if inp.lower() == '--e':
-            webbrowser.open('mailto:?to=julius.ekane@beaconred.ae&subject=Excel%20Atomation%20Error%20-%20' + str(e).replace(' ', '%20') + '&body=' + str(traceback.format_exc()).replace(' ', '%20'))
+            send_error(body=traceback.format_exc(), subject='Excel Atomation Error - ' + str(e))
         else:
             runProgram()
 

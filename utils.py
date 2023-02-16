@@ -56,9 +56,9 @@ def _input_ (title = ''):
 
 
 def print_bound(text: str, lines: int=100, type='info'):
-        cprint('\n' + '-'*lines, type)
-        cprint(text, type)
-        cprint('-'*lines + '\n', type)
+        cprint('\n' + '-'*lines, type, False)
+        cprint(text, type, False)
+        cprint('-'*lines + '\n', type, False)
 
 def _dir_(path: str):
     split = path.split('/')
@@ -89,24 +89,17 @@ def del_tmp_files():
         except:
             pass
 
-def cprint(value: str = '', type: str = 'info'):
+def cprint(value: str = '', type: str = 'info', lable=True):
     print({
         "error": "\033[91m {}\033[00m",
         "info": "\033[96m {}\033[00m",
         "success": "\033[92m {}\033[00m",
         "warn": "\033[93m {}\033[00m"
-    }[type].format(value))
+    }[type].format(('[' + type.upper() + ']: ' if lable else '') + value))
 
-def beep():
+def beep(play_sound):
     try:
-        playsound(resource_path('assets\\beep.mp3'))
+        if play_sound:
+            playsound(resource_path('assets\\beep.mp3'))
     except:
         pass
-
-def reason(sufix: str = ' does not match any in SS.', ms_host_cell_address='', ms_host_value='', ms_plugin_address='', ms_plugin_value=''):
-        return str(
-            ' because..\n[MS: Host (' + 
-            ms_host_cell_address + ') = ' + str(ms_host_value) + 
-            ', Plugin (' + ms_plugin_address + 
-            ') = ' + str(ms_plugin_value) + ']' + sufix
-        )

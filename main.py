@@ -6,10 +6,13 @@ from utils import _input_, print_bound, resource_path, cprint, to_excel, del_tmp
 from collector import Collector
 
 def confirm_restart(play_sound):
-    if play_sound:
-        beep()
-    confirm = _input_('Would you like to restart the process? n = No, anything else = Yes: ')
-    if confirm.lower() in ['n', 'no']:
+    beep(play_sound)
+    confirm = _input_('Would you like to restart the process? n = No, y = Yes, (default = y): ').lower()
+    if not confirm in ['yes', 'y', '', 'n', 'no']:
+        cprint('I do not understand your choice!', 'warn', False)
+        return confirm_restart(play_sound)
+    
+    if confirm in ['n', 'no']:
         sys.exit()
     else:
         runProgram()
@@ -19,6 +22,8 @@ def runProgram():
     os.system('cls')
 
     print_bound(open(resource_path('help\intro.txt'), 'r').read())
+
+    play_sound = False
 
     try:
         col = Collector()
@@ -33,16 +38,17 @@ def runProgram():
 
         while not can_move_to_next_step:
 
-            cprint('\nGrand Confirmation!\n-----------------------')
+            cprint('\nGrand Confirmation!\n-----------------------', lable=False)
 
             scans_str = ''
 
             for i, val in enumerate(scans):
                 scans_str += '\n\nScan ' + str(i + 1) + '\nPath: ' + val['path'] + '\nTarget sheet: ' + str(val['target']) + '\nDate: ' + val['date'] + '\nEntity: ' + val['entity'] + '\nVulnerability parameter: ' + val['vp']
 
-            cprint('Master sheet path: ' + ms_path + '\nTarget sheet: ' + str(ms_target_sheet) + scans_str, 'success')
+            cprint('Master sheet path: ' + ms_path + '\nTarget sheet: ' + str(ms_target_sheet) + scans_str, 'success', lable=False)
 
-            confirm = _input_('Correct? n = No, --rm=n = Removes scan number n, eg --rm=1 removes scan 1, anything else = Yes: ').lower()
+            confirm = col.ask('Correct? n = No, y = Yes, --rm=n = Removes scan n, eg --rm=1 removes scan 1 (default = y): ', lambda v: (v in ['yes', 'no', 'y', 'n', ''] or (len(v.split('--rm=')) == 2 and not v.split('--rm=')[0] and v.split('--rm=')[1].isnumeric)))
+            
             if confirm.lower() in ['n', 'no']:
                 return runProgram()
             
@@ -51,8 +57,8 @@ def runProgram():
             if len(check_rm) == 2:
                 try:
                     rm_index = int(check_rm[1])
-                    if rm_index == len(scans):
-                        raise Exception('Can\'t remove the last scan sheet')
+                    if len(scans) == 1:
+                        raise Exception('Only 1 scan remaining.')
                     scans.pop(rm_index - 1)
                     cprint('Scan ' + str(rm_index) + ' removed, scans re-ordered, ', 'success')
                 except Exception as e:
@@ -60,26 +66,24 @@ def runProgram():
             else:
                 can_move_to_next_step = True
             
-        play_sound = _input_('\nPlay a sound when your attention is needed? y or Enter = Yes, anything else = No: ').lower() in ['', 'y', 'yes']
+        play_sound = col.ask('\nPlay a sound when your attention is needed? y or Enter = Yes, n = No (default = y): ', lambda ans: ans in ['yes', 'y', '', 'n', 'no']).lower() in ['', 'y', 'yes']
 
-        cprint('\nOn it......\n')
+        cprint('On it......\n')
         cprint('Loading Mastersheet.....')
 
         ms_workbook = ope.load_workbook(to_excel(path=ms_path))
 
         cprint('Done!', 'success')
 
-                
         time_start = time.time()
-        total_update = 0
-        total_new = 0
+        total_updates = {"New": 0, "Newly Carried Forward": 0, "Closed": 0}
 
         for i, s in enumerate(scans):
             scanner = Scanner(s['path'], ms_workbook, s['date'], s['entity'], s['vp'], ms_target_sheet, s['target'], i)
             scanner.play_sound = play_sound
+            scanner.total_updates = total_updates
             scanner.scan()
-            total_update += scanner.total_update
-            total_new += scanner.total_new
+            total_updates = scanner.total_updates
 
         time_stop = time.time()
         time_diff = time_stop - time_start
@@ -89,16 +93,21 @@ def runProgram():
         else:
             time_diff = str('%2.f' % time_diff) + ' seconds(s)'
 
-        print_bound('SCANNING AND UPDATE COMPLETE!\n\nTotal cells updated =  ' + str(total_update) + '\nNew vulnerabilities added = ' + str(total_new) + '\nTime spent = ' + time_diff, 40, 'success')
+        total_updates_str = ''
+
+        for tu in total_updates:
+            total_updates_str += (tu + ': ' + str(total_updates[tu]) + '\n')
+        total_updates_str += ('Time spent = ' + time_diff)
+        
+        print_bound('SCANNING AND UPDATE COMPLETE!\n\n' + total_updates_str, 40, 'success')
         del_tmp_files()
 
 
-        if total_update == 0 and total_new == 0:
+        if not any(value > 0 for value in total_updates.values()):
             print('No updates or new vulnerabilities were added to the Mastersheet')
             return confirm_restart(play_sound)
         
-        if play_sound:
-            beep()
+        beep(play_sound)
 
         scanner.save(col.get_path_to_save(default=ms_path, ms_path=ms_path))
 
@@ -107,10 +116,9 @@ def runProgram():
         confirm_restart(play_sound)
 
     except Exception as e:
-        if play_sound:
-            beep()
-        print_bound('\nAn error occured, please try again.\n'+ str(e) +'\nIf proplem persists, enter --e to send me an email with the error trace.', type='error')
+        beep(play_sound)
 
+        print_bound('\nAn error occured, please try again.\n'+ str(e) +'\nIf proplem persists, enter --e to send me an email with the error trace.', type='error')
         inp = _input_('Hit enter to start over or --e to send error: ')
         if inp.lower() == '--e':
             webbrowser.open('mailto:?to=julius.ekane@beaconred.ae&subject=Excel%20Atomation%20Error%20-%20' + str(e).replace(' ', '%20') + '&body=' + str(traceback.format_exc()).replace(' ', '%20'))

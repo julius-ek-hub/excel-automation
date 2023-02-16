@@ -8,16 +8,23 @@ class Collector:
     def __init__(self) -> None:
         self.scans = []
 
-    def get_path_to_open(self, name: str):
+    def ask(self, question, answer_is_ok):
+        q = _input_(question).lower()
+        if answer_is_ok(q):
+            return q
+        cprint('Sorry, I do not understand your choice!', lable=False, type='warn')
+        return self.ask(question, answer_is_ok)
 
-        path = _input_('\nFull path to ' + name + ' (or hit Enter with no input to open file dialog): ')
+    def get_path_to_open(self, name: str, sufix=""):
+
+        path = _input_('\nFull path to ' + name + ' or hit Enter with no input to open file dialog. ' + sufix + ': ')
         path = path.replace('"', '').replace('\'', '').replace('\\', '/').strip()
 
         if not path:
             path = sub_process('open')
         if not sheet_path_open_is_ok(path):
             cprint(path + ' --> Invalid file (' + name + '), try another.', 'error')
-            return self.get_path_to_open(name)
+            return self.get_path_to_open(name, sufix)
         else:
             size = os.stat(path).st_size
             cprint(path + ' --> OK (' + convert_bytes(size) + ')', 'success')
@@ -44,8 +51,8 @@ class Collector:
             return self.get_path_to_save(default, 'Failed to save!\n', ms_path)
 
         new_ms_name = new_ms_name.replace('.xlsx', '') + '.xlsx'
-        confirm = _input_('Save to ' + new_ms_name + '? n = No, anything else = Yes: ')
-        if confirm.lower() in ['n', 'no']:
+        confirm = self.ask('\nSave to ' + new_ms_name + '? n = No, y = Yes (default = y): ', lambda ans: ans in ['yes', 'y', 'no', 'n', ''])
+        if confirm in ['n', 'no']:
             return self.get_path_to_save(default=default, ms_path=ms_path)
 
         return new_ms_name
@@ -95,12 +102,12 @@ class Collector:
 
         new_scan_index = str(len(self.scans) + 1)
 
-        cprint('\nScan ' + new_scan_index + '.\n------------------')
+        cprint('\nScan ' + new_scan_index + '.\n------------------', lable=False)
 
-        ss_path = self.get_path_to_open('Scan sheet')
+        ss_path = self.get_path_to_open('Scan sheet.', sufix="(Mistakenly pressed enter from previous scan? Just enter a random scan and delete it in the Grand Confirmation)")
         ss_target_sheet = self.get_text('Scan sheet target', default=None, validator=target_sheet_is_ok, help='help\\target.sheet.txt')
         
-        scan_date = self.get_text('Scan date in DD/MM/YY', default=datetime.datetime.today().strftime('%d/%m/%Y'), validator=scan_date_is_ok)
+        scan_date = self.get_text('Scan date in MM/DD/YY', default=datetime.datetime.today().strftime('%m/%d/%Y'), validator=scan_date_is_ok)
         entity = self.get_text_from_options({
             "a": "EDGE",
             "b": "ADSB",
@@ -130,10 +137,10 @@ class Collector:
             "b": "External",
         }, 'Vulnerability parameter')
 
-        cprint('\nConfirm scan ' + new_scan_index + '!\n------------------')
-        cprint('Scan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\n', 'success')
+        cprint('\nConfirm scan ' + new_scan_index + '!\n------------------', lable=False)
+        cprint('Scan sheet: ' + ss_path + '\nScan date: ' + scan_date + '\nEntity: ' + entity + '\nVulnerability parameter: ' + vulnerability_param + '\n', 'success', False)
 
-        confirm = _input_('Correct? n = No, --done = Accepts and begins scanning. anything else = Accepts and moves to next scan: ').lower()
+        confirm = self.ask('Correct? n = No, y or Enter = Yes and collect next scan, --done = Yes and move to next stage (default = y): ', lambda ans: ans in ['n', 'no', 'y', 'yes', '--done', ''])
 
         if confirm in ['n', 'no']:
             return self.collect_scans()

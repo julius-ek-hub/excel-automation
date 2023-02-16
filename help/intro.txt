@@ -1,5 +1,5 @@
 
-EXCEL AUTOMATION v1.0.0 by Julius Ekane.
+EXCEL AUTOMATION v2.0.0 by Julius Ekane.
 
 Update one file - Mastersheet (MS) against another - Scansheet (SS)
 

@@ -2,7 +2,7 @@ import os, datetime
 
 def scan_date_is_ok(date: str):
     try:
-        return datetime.datetime.strptime(date, '%d/%m/%Y')
+        return datetime.datetime.strptime(date, '%m/%d/%Y')
     except:
         return False
 

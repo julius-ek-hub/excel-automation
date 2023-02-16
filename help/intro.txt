@@ -1,7 +1,7 @@
 
 EXCEL AUTOMATION v2.0.0 by Julius Ekane.
 
-Update one file - Mastersheet (MS) against another - Scansheet (SS)
+Update one file - Mastersheet (MS) against multiple others - Scansheets (SS)
 
 - Some column names in the mastersheet were marked required.
 - Only use Excel and CSV files.

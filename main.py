@@ -72,6 +72,7 @@ def runProgram():
         cprint('Loading Mastersheet.....')
 
         ms_workbook = ope.load_workbook(to_excel(path=ms_path))
+        ms_col_ids = None
 
         cprint('Done!', 'success')
 
@@ -80,9 +81,11 @@ def runProgram():
 
         for i, s in enumerate(scans):
             scanner = Scanner(s['path'], ms_workbook, s['date'], s['entity'], s['vp'], ms_target_sheet, s['target'], i)
+            scanner.ms_col_ids = ms_col_ids if ms_col_ids else {}
             scanner.play_sound = play_sound
             scanner.total_updates = total_updates
             scanner.scan()
+            ms_col_ids = scanner.ms_col_ids
             total_updates = scanner.total_updates
 
         time_stop = time.time()

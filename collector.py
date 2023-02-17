@@ -27,6 +27,9 @@ class Collector:
             return self.get_path_to_open(name, sufix)
         else:
             size = os.stat(path).st_size
+            if size/1024/1024 > 2:
+                cprint('File size larger than 2MB, Reduce file size by checking and removing excessive blanc rows' + ((' and/or convert your file to .xlsx manually (might reduce the size)' if not path.endswith('.xlsx') else '') + ' otherwise the scanning might take a while.'), 'warn')
+            
             cprint(path + ' --> OK (' + convert_bytes(size) + ')', 'success')
             return path
 

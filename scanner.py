@@ -6,6 +6,8 @@ class Scanner:
         self.ss_path = ss_path
         self.scan_index = str(scan_index + 1)
         self.workbook_ms = workbook_ms
+        self.ms_col_ids = {}
+        self.ss_col_ids = {}
         self.scan_date =scan_date 
         self.ms_target_sheet = ms_target_sheet
         self.ss_target_sheet = ss_target_sheet
@@ -55,19 +57,20 @@ class Scanner:
 
         # Mandatory columns
 
-        self.ms_host_column = self.get_column_by_all_means(sheet=self.ms, key='Host', default_cols=self.ms_default_cols, label='Host')
-        self.ms_plugin_column = self.get_column_by_all_means(sheet=self.ms, key='Plugin', default_cols=self.ms_default_cols, label='Plugin')
-        self.ms_date_column = self.get_column_by_all_means(sheet=self.ms, key='Date', default_cols=self.ms_default_cols, label='Date')
-        self.ms_status_column = self.get_column_by_all_means(sheet=self.ms, key='Status', default_cols=self.ms_default_cols, label='Status')
-        self.ms_ncf_column = self.get_column_by_all_means(sheet=self.ms, key='NCF', default_cols=self.ms_default_cols, label='New/Carried forward')
-        self.ms_vp_column = self.get_column_by_all_means(sheet=self.ms, key='VP', default_cols=self.ms_default_cols, label='Vulnerability parameter')
-        self.ms_entity_column = self.get_column_by_all_means(sheet=self.ms, key='Entity', default_cols=self.ms_default_cols, label='Entity')
-        self.ms_severity_column = self.get_column_by_all_means(sheet=self.ms, key='Severity', default_cols=self.ms_default_cols, label='Severity')
-        self.ms_cd_column = self.get_column_by_all_means(sheet=self.ms, key='CD', default_cols=self.ms_default_cols, label='Close date')
+        if len(self.ms_col_ids) == 0:
+            self.ms_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ms, key='Host', default_cols=self.ms_default_cols, label='Host')
+            self.ms_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ms, key='Plugin', default_cols=self.ms_default_cols, label='Plugin')
+            self.ms_col_ids["Date"] = self.get_column_by_all_means(sheet=self.ms, key='Date', default_cols=self.ms_default_cols, label='Date')
+            self.ms_col_ids["Status"] = self.get_column_by_all_means(sheet=self.ms, key='Status', default_cols=self.ms_default_cols, label='Status')
+            self.ms_col_ids["NCF"] = self.get_column_by_all_means(sheet=self.ms, key='NCF', default_cols=self.ms_default_cols, label='New/Carried forward')
+            self.ms_col_ids["VP"] = self.get_column_by_all_means(sheet=self.ms, key='VP', default_cols=self.ms_default_cols, label='Vulnerability parameter')
+            self.ms_col_ids["Entity"] = self.get_column_by_all_means(sheet=self.ms, key='Entity', default_cols=self.ms_default_cols, label='Entity')
+            self.ms_col_ids["Severity"] = self.get_column_by_all_means(sheet=self.ms, key='Severity', default_cols=self.ms_default_cols, label='Severity')
+            self.ms_col_ids["CD"] = self.get_column_by_all_means(sheet=self.ms, key='CD', default_cols=self.ms_default_cols, label='Close date')
 
-        self.ss_host_column = self.get_column_by_all_means(sheet=self.ss, key='Host', default_cols=self.ss_default_cols, label='Host', sheet_name='Scan sheet ' + self.scan_index)
-        self.ss_plugin_column = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label='Plugin', sheet_name='Scan sheet ' + self.scan_index)
-        self.ss_severity_column = self.get_column_by_all_means(sheet=self.ss, key='Severity', default_cols=self.ss_default_cols, label='Severity', sheet_name='Scan sheet ' + self.scan_index)
+        self.ss_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ss, key='Host', default_cols=self.ss_default_cols, label='Host', sheet_name='Scan sheet ' + self.scan_index)
+        self.ss_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label='Plugin', sheet_name='Scan sheet ' + self.scan_index)
+        self.ss_col_ids["Severity"] = self.get_column_by_all_means(sheet=self.ss, key='Severity', default_cols=self.ss_default_cols, label='Severity', sheet_name='Scan sheet ' + self.scan_index)
 
         # Non mandatory columns
 
@@ -81,38 +84,41 @@ class Scanner:
         cf = 'Carried Forward'
         pcd = 'Patched'
 
-        for ms_row in self.get_column_data(sheet=self.ms, column=self.ms_plugin_column):
+        for ms_row in self.get_column_data(sheet=self.ms, column=self.ms_col_ids["Plugin"]):
 
             ms_row_str = str(ms_row.row)
 
-            ms_cd_cell = self.ms[self.ms_cd_column + ms_row_str]
-            ms_status_cell = self.ms[self.ms_status_column + ms_row_str]
+            ms_cd_cell = self.ms[self.ms_col_ids["CD"] + ms_row_str]
+            ms_status_cell = self.ms[self.ms_col_ids["Status"] + ms_row_str]
 
             ms_plugin_value = self.trim(ms_row.value).lower()
-            ms_host_value = self.trim(self.ms[self.ms_host_column + ms_row_str].value).lower()
-            ms_severity_value = self.trim(self.ms[self.ms_severity_column + ms_row_str].value).lower()
+            ms_host_value = self.trim(self.ms[self.ms_col_ids["Host"] + ms_row_str].value).lower()
+            ms_severity_value = self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row_str].value).lower()
+
+            if not (ms_plugin_value or ms_host_value or ms_severity_value): continue
 
             closed = ms_cd_cell.value
 
-            target_vp = self.vulnerability_param == self.trim(self.ms[self.ms_vp_column + ms_row_str].value)
-            target_entity = self.entity == self.trim(self.ms[self.ms_entity_column + ms_row_str].value)
+            target_vp = self.vulnerability_param == self.trim(self.ms[self.ms_col_ids["VP"] + ms_row_str].value)
+            target_entity = self.entity == self.trim(self.ms[self.ms_col_ids["Entity"] + ms_row_str].value)
 
-            if not (target_entity and target_vp) or closed:
-                continue
+            if not (target_entity and target_vp) or closed: continue
 
             self.ms_existing_vulnerability_rows.append(ms_row_str)
 
             vulnerability_match = False
 
-            for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_plugin_column):
+            for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_col_ids["Plugin"]):
 
                 if vulnerability_match: continue
 
                 ss_row_str = str(ss_row.row)
 
                 ss_plugin_value = self.trim(ss_row.value).lower()
-                ss_host_value = self.trim(self.ss[self.ss_host_column + ss_row_str].value).lower()
-                ss_severity_value = self.trim(self.ss[self.ss_severity_column + ss_row_str].value).lower()
+                ss_host_value = self.trim(self.ss[self.ss_col_ids["Host"] + ss_row_str].value).lower()
+                ss_severity_value = self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value).lower()
+
+                if not (ss_plugin_value or ss_host_value or ss_severity_value): continue
 
                 same_plugin = ms_plugin_value == ss_plugin_value
                 same_host = ms_host_value == ss_host_value
@@ -122,7 +128,7 @@ class Scanner:
 
                 if (vulnerability_match):
 
-                    ms_ncf_cell = self.ms[self.ms_ncf_column + ms_row_str]
+                    ms_ncf_cell = self.ms[self.ms_col_ids["NCF"] + ms_row_str]
 
                     carried_forward = self.trim(ms_ncf_cell.value).lower() == cf.lower()
 
@@ -142,22 +148,24 @@ class Scanner:
 
     def check_scansheet_with_mastersheet(self):
         
-        for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_plugin_column):
+        for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_col_ids["Plugin"]):
 
             ss_row_str = str(ss_row.row)
             ss_plugin_value = self.trim(ss_row.value).lower()
-            ss_host_value = self.trim(self.ss[self.ss_host_column + ss_row_str].value).lower()
-            ss_severity_value = self.trim(self.ss[self.ss_severity_column + ss_row_str].value).lower()
+            ss_host_value = self.trim(self.ss[self.ss_col_ids["Host"] + ss_row_str].value).lower()
+            ss_severity_value = self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value).lower()
+
+            if not (ss_plugin_value or ss_host_value or ss_severity_value): continue
 
             vulnerabily_exists = False
 
             for ms_row in self.ms_existing_vulnerability_rows:
-                ms_plugin_value = self.trim(self.ms[self.ms_plugin_column + ms_row].value).lower()
-                ms_host_value = self.trim(self.ms[self.ms_host_column + ms_row].value).lower()
+                ms_plugin_value = self.trim(self.ms[self.ms_col_ids["Plugin"] + ms_row].value).lower()
+                ms_host_value = self.trim(self.ms[self.ms_col_ids["Host"] + ms_row].value).lower()
 
                 same_plugin = ms_plugin_value == ss_plugin_value 
                 same_host = ms_host_value == ss_host_value
-                same_severity = self.trim(self.ms[self.ms_severity_column + ms_row].value).lower() == ss_severity_value
+                same_severity = self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row].value).lower() == ss_severity_value
 
                 if same_plugin and same_host and same_severity:
                     vulnerabily_exists = True
@@ -167,11 +175,11 @@ class Scanner:
 
                 ms_last_empty_row = str(len(self.ms['A']) + 1)
 
-                self.ms[self.ms_vp_column + ms_last_empty_row].value = self.vulnerability_param
-                self.ms[self.ms_status_column + ms_last_empty_row].value = 'pending'
-                self.ms[self.ms_date_column + ms_last_empty_row].value = self.scan_date
-                self.ms[self.ms_entity_column + ms_last_empty_row].value = self.entity
-                self.ms[self.ms_ncf_column + ms_last_empty_row].value = 'New'
+                self.ms[self.ms_col_ids["VP"] + ms_last_empty_row].value = self.vulnerability_param
+                self.ms[self.ms_col_ids["Status"] + ms_last_empty_row].value = 'pending'
+                self.ms[self.ms_col_ids["Date"] + ms_last_empty_row].value = self.scan_date
+                self.ms[self.ms_col_ids["Entity"] + ms_last_empty_row].value = self.entity
+                self.ms[self.ms_col_ids["NCF"] + ms_last_empty_row].value = 'New'
 
                 for n in self.nm_column_keys:
                     ss_column = self.non_mandatory_columns['ss'][n]

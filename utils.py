@@ -1,5 +1,4 @@
-import pandas as pd, sys, os, webbrowser, subprocess, win32com.client as win32
-from playsound import playsound
+import sys, os, webbrowser, subprocess, win32com.client as win32, playsound as player, openpyxl, csv
 
 column_names = {
     'Plugin': 'Plugin~&~&~Plugin ID',
@@ -48,6 +47,7 @@ def _input_ (title = ''):
         value = input(title).strip()
         test_value = value.lower()
         if test_value == '--x':
+            del_tmp_files()
             sys.exit()
         if test_value == '--r':
             webbrowser.open('https://github.com/julius-ek-hub/excel-automation')
@@ -72,11 +72,17 @@ def to_excel(path):
     if name_with_ext.endswith('.xlsx'):
         return path
     name = name_with_ext.split('.')[0]
-    csv = pd.read_csv(path)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
     tmp_path = resource_path('__tmp__\\' + name + '.xlsx')
-    writer = pd.ExcelWriter(tmp_path)
-    csv.to_excel(writer, index=False)
-    writer.close()
+
+    with open(path) as f:
+        reader = csv.reader(f)
+        for row in reader:
+            ws.append(row)
+
+    wb.save(tmp_path)
     return tmp_path
 
 def del_tmp_files():
@@ -100,7 +106,7 @@ def cprint(value: str = '', type: str = 'info', lable=True):
 def beep(play_sound):
     try:
         if play_sound:
-            playsound(resource_path('assets\\beep.mp3'))
+            player.playsound(resource_path('assets\\beep.mp3'))
     except:
         pass
 

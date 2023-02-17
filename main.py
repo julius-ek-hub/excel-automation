@@ -47,7 +47,7 @@ def runProgram():
 
             cprint('Mastersheet\nPath: ' + ms_path + '\nTarget worksheet: ' + str(ms_target_sheet if ms_target_sheet else 'Active') + scans_str, 'success', lable=False)
 
-            confirm = col.ask('Correct? n = No, y = Yes, --rm=n = Removes scan n, eg --rm=1 removes scan 1 (default = y): ', lambda v: (v in ['yes', 'no', 'y', 'n', ''] or (len(v.split('--rm=')) == 2 and not v.split('--rm=')[0] and v.split('--rm=')[1].isnumeric)))
+            confirm = col.ask('Correct? n = No, y = Yes, --rm=n = Remove scan n, eg --rm=1 removes scan 1 (default = y): ', lambda v: (v in ['yes', 'no', 'y', 'n', ''] or (len(v.split('--rm=')) == 2 and not v.split('--rm=')[0] and v.split('--rm=')[1].isnumeric)))
             
             if confirm.lower() in ['n', 'no']:
                 return runProgram()

@@ -53,11 +53,10 @@ class Scanner:
 
     def get_columns(self):
 
-        cprint('Identifying columns....')
-
         # Mandatory columns
 
         if len(self.ms_col_ids) == 0:
+            cprint('Identifying columns.... (Mastersheet)')
             self.ms_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ms, key='Host', default_cols=self.ms_default_cols, label='Host')
             self.ms_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ms, key='Plugin', default_cols=self.ms_default_cols, label='Plugin')
             self.ms_col_ids["Date"] = self.get_column_by_all_means(sheet=self.ms, key='Date', default_cols=self.ms_default_cols, label='Date')
@@ -67,6 +66,9 @@ class Scanner:
             self.ms_col_ids["Entity"] = self.get_column_by_all_means(sheet=self.ms, key='Entity', default_cols=self.ms_default_cols, label='Entity')
             self.ms_col_ids["Severity"] = self.get_column_by_all_means(sheet=self.ms, key='Severity', default_cols=self.ms_default_cols, label='Severity')
             self.ms_col_ids["CD"] = self.get_column_by_all_means(sheet=self.ms, key='CD', default_cols=self.ms_default_cols, label='Close date')
+        
+        else:
+            cprint('Identifying columns.... (Scansheet ' + self.scan_index + ')')
 
         self.ss_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ss, key='Host', default_cols=self.ss_default_cols, label='Host', sheet_name='Scan sheet ' + self.scan_index)
         self.ss_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label='Plugin', sheet_name='Scan sheet ' + self.scan_index)

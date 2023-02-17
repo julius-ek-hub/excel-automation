@@ -107,7 +107,7 @@ class Collector:
 
         cprint('\nScan ' + new_scan_index + '.\n------------------', lable=False)
 
-        ss_path = self.get_path_to_open('Scan sheet.', sufix="(Mistakenly pressed enter from previous scan? Just enter a random scan and delete it in the Grand Confirmation)")
+        ss_path = self.get_path_to_open('Scan sheet.', sufix=" (Mistakenly pressed enter from previous scan? Just enter a random scan and delete it in the Grand Confirmation)")
         ss_target_sheet = self.get_text('Worksheet target', default=None, validator=lambda v: True, help='help\\target.sheet.txt')
         
         scan_date = self.get_text('Scan date in MM/DD/YY', default=datetime.datetime.today().strftime('%m/%d/%Y'), validator=scan_date_is_ok)

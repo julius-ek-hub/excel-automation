@@ -13,7 +13,7 @@ A program that compares one master file with multiple scan files and makes chang
 - Install openpyxl
 
     ```cmd
-    pip install -r openpyxl
+    pip install openpyxl
     ```
 
 - Run the program

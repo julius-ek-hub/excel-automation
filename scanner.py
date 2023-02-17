@@ -43,7 +43,7 @@ class Scanner:
         
         if not col and important:
             beep(self.play_sound)
-            from_user = _input_(sheet_name + ' ' + label + ' column doesn\'t exist for value ' + ' or '.join(default_cols[key].split('~&~&~')) + ', check ' + sheet_name + ' and enter the value for ' + label + ' column title: ')
+            from_user = _input_(sheet_name + ' ' + label + ' column doesn\'t exist for value ' + ' or '.join(default_cols[key].split('~&~&~')) + ', check ' + sheet_name + ' and enter the title for ' + label + ' column: ')
             if from_user:
                 default_cols[key] = from_user
             return self.get_column_by_all_means(label, key, sheet, default_cols, sheet_name)

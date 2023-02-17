@@ -1,4 +1,4 @@
-import os, webbrowser, traceback, sys, openpyxl as ope, time
+import os, traceback, sys, openpyxl as ope, time
 
 from validator import *
 from scanner import Scanner

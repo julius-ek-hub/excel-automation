@@ -10,11 +10,10 @@ A program that compares one master file with multiple scan files and makes chang
 - Clone or download this repository
 - Make sure you have python3 installed
 - Open your terminal and navigate to the path you cloned the repository
-- Install required modules 
-- In case you wouldn't want to compile your program to windows executable, remove auto-py-to-exe from [required.txt](https://github.com/julius-ek-hub/excel-automation/tree/main/required.txt) before running below
+- Install openpyxl
 
     ```cmd
-    pip install -r required.txt
+    pip install -r openpyxl
     ```
 
 - Run the program
@@ -23,11 +22,5 @@ A program that compares one master file with multiple scan files and makes chang
     py main.py
     ```
 - Make changes to source code as you wish
-- Compile your program to windows executable for distribution by typing
-    ```cmd
-    auto-py-to-exe
-    ```
-    and follow the instruction from pop up UI
-- File names, variable names and function names were made as friendly as possible.
 
-Goodluck.
+Cheers.

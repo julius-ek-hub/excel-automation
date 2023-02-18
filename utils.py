@@ -1,4 +1,4 @@
-import sys, os, webbrowser, subprocess, win32com.client as win32, playsound as player, openpyxl, csv
+import sys, os, webbrowser, subprocess, win32com.client as win32, playsound as player, openpyxl, csv, dateutil.parser as parser
 
 column_names = {
     'Plugin': 'Plugin~&~&~Plugin ID',
@@ -118,3 +118,10 @@ def send_error(body, subject):
     mail.HtmlBody = body
 
     mail.Display(True)
+
+def same_week(date_created: str, scan_date: str):
+    '''returns true if a date_string in %m/%d/%Y format is part of the current week'''
+
+    d1 = parser.parse(date_created)
+    d2 = parser.parse(scan_date)
+    return d1.isocalendar()[1] == d2.isocalendar()[1] and d1.year == d2.year 

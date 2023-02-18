@@ -1,5 +1,5 @@
 import openpyxl as ex, os
-from utils import to_excel, column_names, _input_, cprint, beep
+from utils import to_excel, column_names, _input_, cprint, beep, same_week
 
 class Scanner:
     def __init__(self, ss_path, workbook_ms, scan_date, entity, vulnerability_param, ms_target_sheet, ss_target_sheet, scan_index):
@@ -40,7 +40,7 @@ class Scanner:
                 return chr(64 + col[0].column)
 
 
-    def get_column_by_all_means(self, label: str, key: str, sheet: str, default_cols, sheet_name: str = 'Master sheet', important: bool = True):
+    def get_column_by_all_means(self, label: str, key: str, sheet: str, default_cols, sheet_name: str = 'Mastersheet', important: bool = True):
         col = self.get_column(sheet, default_cols[key])
         
         if not col and important:
@@ -70,14 +70,14 @@ class Scanner:
         else:
             cprint('Identifying columns.... (Scansheet ' + self.scan_index + ')')
 
-        self.ss_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ss, key='Host', default_cols=self.ss_default_cols, label='Host', sheet_name='Scan sheet ' + self.scan_index)
-        self.ss_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label='Plugin', sheet_name='Scan sheet ' + self.scan_index)
-        self.ss_col_ids["Severity"] = self.get_column_by_all_means(sheet=self.ss, key='Severity', default_cols=self.ss_default_cols, label='Severity', sheet_name='Scan sheet ' + self.scan_index)
+        self.ss_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ss, key='Host', default_cols=self.ss_default_cols, label='Host', sheet_name='Scansheet ' + self.scan_index)
+        self.ss_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label='Plugin', sheet_name='Scansheet ' + self.scan_index)
+        self.ss_col_ids["Severity"] = self.get_column_by_all_means(sheet=self.ss, key='Severity', default_cols=self.ss_default_cols, label='Severity', sheet_name='Scansheet ' + self.scan_index)
 
         # Non mandatory columns
 
         for key in self.nm_column_keys:
-            self.non_mandatory_columns["ss"][key] = self.get_column_by_all_means(sheet=self.ss, key=key, label=column_names[key], sheet_name='Scan sheet ' + self.scan_index, default_cols=self.ss_default_cols, important=False)
+            self.non_mandatory_columns["ss"][key] = self.get_column_by_all_means(sheet=self.ss, key=key, label=column_names[key], sheet_name='Scansheet ' + self.scan_index, default_cols=self.ss_default_cols, important=False)
             self.non_mandatory_columns["ms"][key] = self.get_column_by_all_means(sheet=self.ms, key=key, label=column_names[key], default_cols=self.ms_default_cols, important=False)
 
 
@@ -103,10 +103,13 @@ class Scanner:
 
             target_vp = self.vulnerability_param == self.trim(self.ms[self.ms_col_ids["VP"] + ms_row_str].value)
             target_entity = self.entity == self.trim(self.ms[self.ms_col_ids["Entity"] + ms_row_str].value)
+            date_created = self.trim(self.ms[self.ms_col_ids["Date"] + ms_row_str].value)
 
             if not (target_entity and target_vp) or closed: continue
 
             self.ms_existing_vulnerability_rows.append(ms_row_str)
+
+            if same_week(date_created, self.scan_date): continue
 
             vulnerability_match = False
 

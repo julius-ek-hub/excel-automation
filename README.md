@@ -1,4 +1,4 @@
-# VULNERABILITY SCANNER V2.1.0
+# VULNERABILITY SCANNER V2.2.0
 
 Only to whom it concerns.
 

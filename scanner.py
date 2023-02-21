@@ -1,4 +1,5 @@
 import openpyxl as ex, os
+from openpyxl.styles import Alignment
 from utils import to_excel, column_names, _input_, cprint, beep, same_week
 
 class Scanner:
@@ -24,6 +25,11 @@ class Scanner:
     @staticmethod
     def trim(value):
         return str(value).strip()
+    
+    @staticmethod
+    def set(cell, value):
+        cell.value = value
+        cell.alignment = Alignment(horizontal='right')
     
     @staticmethod
     def get_column_data(sheet, column):
@@ -96,10 +102,11 @@ class Scanner:
             ms_plugin_value = self.trim(ms_row.value).lower()
             ms_host_value = self.trim(self.ms[self.ms_col_ids["Host"] + ms_row_str].value).lower()
             ms_severity_value = self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row_str].value).lower()
+            ms_status_value = self.trim(ms_status_cell.value).lower()
 
             if not (ms_plugin_value or ms_host_value or ms_severity_value): continue
 
-            closed = ms_cd_cell.value
+            closed = ms_cd_cell.value or ms_status_value == pcd.lower()
 
             target_vp = self.vulnerability_param == self.trim(self.ms[self.ms_col_ids["VP"] + ms_row_str].value)
             target_entity = self.entity == self.trim(self.ms[self.ms_col_ids["Entity"] + ms_row_str].value)
@@ -138,17 +145,17 @@ class Scanner:
                     carried_forward = self.trim(ms_ncf_cell.value).lower() == cf.lower()
 
                     if not carried_forward:
-                        ms_ncf_cell.value = cf
+                        self.set(ms_ncf_cell, cf)
                         self.total_updates["Carried Forward"] += 1
                     break
                     
 
             if not vulnerability_match:
-                ms_cd_cell.value = self.scan_date
+                self.set(ms_cd_cell, self.scan_date)
                 self.total_updates["Closed"] += 1
 
                 if pcd != self.trim(ms_status_cell.value).lower():
-                    ms_status_cell.value = pcd
+                    self.set(ms_status_cell, pcd)
 
 
     def check_scansheet_with_mastersheet(self):
@@ -180,18 +187,18 @@ class Scanner:
 
                 ms_last_empty_row = str(len(self.ms['A']) + 1)
 
-                self.ms[self.ms_col_ids["VP"] + ms_last_empty_row].value = self.vulnerability_param
-                self.ms[self.ms_col_ids["Status"] + ms_last_empty_row].value = 'pending'
-                self.ms[self.ms_col_ids["Date"] + ms_last_empty_row].value = self.scan_date
-                self.ms[self.ms_col_ids["Entity"] + ms_last_empty_row].value = self.entity
-                self.ms[self.ms_col_ids["NCF"] + ms_last_empty_row].value = 'New'
+                self.set(self.ms[self.ms_col_ids["VP"] + ms_last_empty_row], self.vulnerability_param)
+                self.set(self.ms[self.ms_col_ids["Status"] + ms_last_empty_row], 'pending')
+                self.set(self.ms[self.ms_col_ids["Date"] + ms_last_empty_row], self.scan_date)
+                self.set(self.ms[self.ms_col_ids["Entity"] + ms_last_empty_row], self.entity)
+                self.set(self.ms[self.ms_col_ids["NCF"] + ms_last_empty_row], 'New')
 
                 for n in self.nm_column_keys:
                     ss_column = self.non_mandatory_columns['ss'][n]
                     ms_column = self.non_mandatory_columns['ms'][n]
                     if not (ss_column and ms_column):
                         continue
-                    self.ms[self.non_mandatory_columns['ms'][n] + ms_last_empty_row].value = self.ss[self.non_mandatory_columns['ss'][n] + ss_row_str].value
+                    self.set(self.ms[self.non_mandatory_columns['ms'][n] + ms_last_empty_row], self.ss[self.non_mandatory_columns['ss'][n] + ss_row_str].value)
 
                 self.total_updates["New"] += 1
 

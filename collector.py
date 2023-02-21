@@ -110,7 +110,7 @@ class Collector:
         ss_path = self.get_path_to_open('Scan sheet.', sufix=" (Mistakenly pressed enter from previous scan? Just enter a random scan and delete it in the Grand Confirmation)")
         ss_target_sheet = self.get_text('Worksheet target', default=None, validator=lambda v: True, help='help\\target.sheet.txt')
         
-        scan_date = self.get_text('Scan date in MM/DD/YY', default=datetime.datetime.today().strftime('%m/%d/%Y'), validator=scan_date_is_ok)
+        scan_date = self.get_text('Scan date in DD/MM/YY', default=datetime.datetime.today().strftime('%d/%m/%Y'), validator=scan_date_is_ok)
         entity = self.get_text_from_options({
             "a": "EDGE",
             "b": "ADSB",
@@ -134,6 +134,7 @@ class Collector:
             "t": "HORIZON",
             "u": "JAHEZIYA",
             "v": "SIM",
+            "w": "EDGE-DT"
         }, 'Entity')
         vulnerability_param = self.get_text_from_options({
             "a": "Internal",

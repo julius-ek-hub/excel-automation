@@ -2,7 +2,7 @@ import sys, os, webbrowser, subprocess, win32com.client as win32, playsound as p
 
 column_names = {
     'Plugin': 'Plugin~&~&~Plugin ID',
-    'VP': 'Vulnerability Parameter~&~&~internal/external/Scan type',
+    'VP': 'Vulnerability Parameter~&~&~internal/external~&~&~Scan type',
     'CVE': 'CVE',
     'PN': 'Plugin Name~&~&~Name',
     'Status': 'Status',

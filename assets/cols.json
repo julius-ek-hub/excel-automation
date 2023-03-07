@@ -1,0 +1,22 @@
+{
+    "Plugin": ["Plugin", "Plugin ID"],
+    "VP": ["Vulnerability Parameter", "internal/external", "Scan type"],
+    "CVE": ["CVE"],
+    "PN": ["Plugin Name", "Name"],
+    "Status": ["Status"],
+    "Date": ["Date"],
+    "NCF": ["New/Carried forward"],
+    "CD": ["Close Date"],
+    "HO": ["How old"],
+    "SBD": ["SLA Breached / Day"],
+    "Severity": ["Severity"],
+    "Entity": ["Entity"],
+    "Host": ["Host", "Ip Address"],  
+    "IP": ["Ip Address"],
+    "NBN": ["NetBIOS Name"],
+    "Description": ["Description"],
+    "Solution": ["Solution"],
+    "DD": ["Date discovered", "First Discovered", "First found"],
+    "CCD": ["Closing/Current Date"],
+    "SBDC": ["SLA Breached / Day Count"]
+}

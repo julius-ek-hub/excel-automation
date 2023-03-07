@@ -1,6 +1,8 @@
 import openpyxl as ex, os
-from openpyxl.styles import Alignment
-from utils import to_excel, column_names, _input_, cprint, beep, same_week
+from openpyxl.utils.cell import get_column_letter
+from utils import to_excel, _input_, cprint, beep, same_week, resource_path, from_json_file
+
+column_names = from_json_file('./assets/cols.json')
 
 class Scanner:
     def __init__(self, ss_path, workbook_ms, scan_date, entity, vulnerability_param, ms_target_sheet, ss_target_sheet, scan_index):
@@ -14,13 +16,15 @@ class Scanner:
         self.ss_target_sheet = ss_target_sheet
         self.entity = entity 
         self.vulnerability_param = vulnerability_param
-        self.ms_default_cols = column_names.copy()
-        self.ss_default_cols = column_names.copy()
-        self.non_mandatory_columns = {"ss": {}, "ms": {}}
-        self.nm_column_keys = ['Plugin', 'Host', 'PN', 'Severity','NBN', 'Description', 'Solution', 'DD', 'CVE']
+        self.ms_col_names = column_names.copy()
+        self.ss_col_names = column_names.copy()
         self.total_updates = {"New": 0, "Newly Carried Forward": 0, "Closed": 0}
         self.ms_existing_vulnerability_rows = []
+        self.target_entities_by_ips = {}
+        self.ips_target_sheet = None
+        self.ips_path = None
         self.play_sound = False
+        self.internal = vulnerability_param == 'Internal'
 
     @staticmethod
     def trim(value):
@@ -29,7 +33,6 @@ class Scanner:
     @staticmethod
     def set(cell, value):
         cell.value = value
-        cell.alignment = Alignment(horizontal='right')
     
     @staticmethod
     def get_column_data(sheet, column):
@@ -39,52 +42,114 @@ class Scanner:
         all.pop(0)
         return tuple(all)
 
-    def get_column(self, sheet, search_value):
+    def get_column(self, sheet, possible_names):
         for col in sheet.iter_cols(1, sheet.max_column):
             value = self.trim(col[0].value).lower()
-            if value and any(name.lower() == value for name in search_value.split('~&~&~')):
-                return chr(64 + col[0].column)
+            if value and any(name.lower() == value for name in possible_names):
+                return get_column_letter(col[0].column)
+            
+    def identify_entities_by_ips(self):
+
+        unknown_entity_ips = []
+        
+        for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_col_ids["Plugin"]):
+
+            ss_row_str = str(ss_row.row)
+            ss_ip_value = self.trim(self.ss[self.ss_col_ids["Host"] + ss_row_str].value).lower()
+
+            if self.target_entities_by_ips.get(ss_ip_value) or ss_ip_value in unknown_entity_ips: continue
+
+            entity_unknon = True
+
+            ips_path = self.ips_path or './assets/ips.xlsx'
+            
+            ips_ws = ex.load_workbook(resource_path(ips_path))
+            ips_sheet = ips_ws.active
+
+            if self.ips_target_sheet:
+                try:
+                    ips_sheet = ips_ws[self.ips_target_sheet]
+                except Exception as e: raise Exception(str(e) + ' (All IPs/Entities file)')
+
+            for ip_row in self.get_column_data(sheet=ips_sheet, column='A'):
+
+                ip_row_str = str(ip_row.row)
+
+                ip = self.trim(ips_sheet['A' + ip_row_str].value)
+                entity = self.trim(ips_sheet['B' + ip_row_str].value).upper().replace('_', ' ')
+                entity = 'KATIM' if entity in ['D14', 'DIGITAL14', 'D14/KATIM'] else ('EDGE' if entity == 'EDGE_CORP' else ('KNOWLEDGE POINT' if entity == 'KPOINT' else entity))
+
+                if ip == ss_ip_value:
+                    self.target_entities_by_ips[ss_ip_value] = entity
+                    entity_unknon = False
+                    break
+
+            if entity_unknon:
+
+                for ms_row in self.get_column_data(sheet=self.ms, column=self.ms_col_ids["Plugin"]):
+
+                    ms_row_str = str(ms_row.row)
+                    ms_ip_value = self.trim(self.ms[self.ms_col_ids["Host"] + ms_row_str].value).lower()
+                    ms_entity_value = self.trim(self.ms[self.ms_col_ids["Entity"] + ms_row_str].value)
+
+                    if ms_ip_value == ss_ip_value and ms_entity_value:
+                        self.target_entities_by_ips[ss_ip_value] = ms_entity_value
+                        entity_unknon = False
+                        break
+
+            if entity_unknon:
+                unknown_entity_ips.append(ss_ip_value)
+                allowed_entities = from_json_file('./assets/entities.json').values()
+                domain = ss_ip_value.replace('-', ' ').upper()
+                try_entity = ''
+
+                if domain.endswith('.EDGEGROUP.AE'):
+                    d = domain.split('.EDGEGROUP.AE')
+                    dv = d[0].strip()
+                    dv = 'KNOWLEDGE POINT' if dv == 'KP' else dv
+                    try_entity = dv if dv in allowed_entities else ''
+                elif domain.endswith('.AE'):
+                   d = domain.split('.AE')
+                   dv = d[0].strip()
+                   dv = 'KNOWLEDGE POINT' if dv == 'KP' else ('EDGE' if dv == 'EDGEGROUP' else ('BEACON RED' if dv == 'BEACONRED' else dv))
+                   try_entity = dv if dv in allowed_entities else ''
+
+                self.target_entities_by_ips[ss_ip_value] = try_entity
+
+        if len(unknown_entity_ips) > 0 :
+            cprint('Could not find Entity in both External IPs sheet and mastersheet for the following IPs - ' + str(unknown_entity_ips) + ', their values will be blanc.' + (' However, some of the IPs are in the form of domain names. In such cases, the program tries to extract the entity name from the domain name.' if any((ip.endswith('.ae') or ip.endswith('.com')) for ip in unknown_entity_ips) else ''), 'warning')
+
+        self.target_entities_by_ips['entities'] = list(dict.fromkeys(list(self.target_entities_by_ips.values())))
 
 
-    def get_column_by_all_means(self, label: str, key: str, sheet: str, default_cols, sheet_name: str = 'Mastersheet', important: bool = True):
-        col = self.get_column(sheet, default_cols[key])
+    def get_column_by_all_means(self, key: str, sheet: str, col_names, sheet_name: str = 'Mastersheet', important: bool = True):
+        col = self.get_column(sheet, col_names[key])
+        label = col_names[key][0]
         
         if not col and important:
             beep(self.play_sound)
-            from_user = _input_(sheet_name + ' ' + label + ' column doesn\'t exist for value ' + ' or '.join(default_cols[key].split('~&~&~')) + ', check ' + sheet_name + ' and enter the title for ' + label + ' column: ')
+            from_user = _input_(sheet_name + ' ' + label + ' column doesn\'t exist for value ' + ' or '.join(col_names[key]) + ', check ' + sheet_name + ' and enter the title for ' + label + ' column: ')
             if from_user:
-                default_cols[key] = from_user
-            return self.get_column_by_all_means(label, key, sheet, default_cols, sheet_name)
+                col_names[key].append(from_user)
+            return self.get_column_by_all_means(key, sheet, col_names, sheet_name, important)
         return col
 
     def get_columns(self):
 
-        # Mandatory columns
-
         if len(self.ms_col_ids) == 0:
             cprint('Identifying columns.... (Mastersheet)')
-            self.ms_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ms, key='Host', default_cols=self.ms_default_cols, label='Host')
-            self.ms_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ms, key='Plugin', default_cols=self.ms_default_cols, label='Plugin')
-            self.ms_col_ids["Date"] = self.get_column_by_all_means(sheet=self.ms, key='Date', default_cols=self.ms_default_cols, label='Date')
-            self.ms_col_ids["Status"] = self.get_column_by_all_means(sheet=self.ms, key='Status', default_cols=self.ms_default_cols, label='Status')
-            self.ms_col_ids["NCF"] = self.get_column_by_all_means(sheet=self.ms, key='NCF', default_cols=self.ms_default_cols, label='New/Carried forward')
-            self.ms_col_ids["VP"] = self.get_column_by_all_means(sheet=self.ms, key='VP', default_cols=self.ms_default_cols, label='Vulnerability parameter')
-            self.ms_col_ids["Entity"] = self.get_column_by_all_means(sheet=self.ms, key='Entity', default_cols=self.ms_default_cols, label='Entity')
-            self.ms_col_ids["Severity"] = self.get_column_by_all_means(sheet=self.ms, key='Severity', default_cols=self.ms_default_cols, label='Severity')
-            self.ms_col_ids["CD"] = self.get_column_by_all_means(sheet=self.ms, key='CD', default_cols=self.ms_default_cols, label='Close date')
-        
-        else:
-            cprint('Identifying columns.... (Scansheet ' + self.scan_index + ')')
+            for key in self.ms_col_names.keys():
+                important = True
+                if key in ['PN','NBN', 'Description', 'Solution', 'DD', 'CVE', 'IP']: important = False
+                self.ms_col_ids[key] = self.get_column_by_all_means(sheet=self.ms, key=key, col_names=self.ms_col_names, important=important)
+                
 
-        self.ss_col_ids["Host"] = self.get_column_by_all_means(sheet=self.ss, key='Host', default_cols=self.ss_default_cols, label='Host', sheet_name='Scansheet ' + self.scan_index)
-        self.ss_col_ids["Plugin"] = self.get_column_by_all_means(sheet=self.ss, key='Plugin', default_cols=self.ss_default_cols, label='Plugin', sheet_name='Scansheet ' + self.scan_index)
-        self.ss_col_ids["Severity"] = self.get_column_by_all_means(sheet=self.ss, key='Severity', default_cols=self.ss_default_cols, label='Severity', sheet_name='Scansheet ' + self.scan_index)
+        cprint('Identifying columns.... (Scansheet ' + self.scan_index + ')')
 
-        # Non mandatory columns
-
-        for key in self.nm_column_keys:
-            self.non_mandatory_columns["ss"][key] = self.get_column_by_all_means(sheet=self.ss, key=key, label=column_names[key], sheet_name='Scansheet ' + self.scan_index, default_cols=self.ss_default_cols, important=False)
-            self.non_mandatory_columns["ms"][key] = self.get_column_by_all_means(sheet=self.ms, key=key, label=column_names[key], default_cols=self.ms_default_cols, important=False)
+        for key in self.ss_col_names.keys():
+            important = False
+            if key in ['Host' if self.internal else 'IP', 'Plugin', 'Severity']: important = True
+            self.ss_col_ids[key] = self.get_column_by_all_means(sheet=self.ss, key=key, col_names=self.ss_col_names, important=important, sheet_name='Scansheet ' + self.scan_index)
 
 
     def check_mastersheet_with_scansheet(self):
@@ -109,7 +174,7 @@ class Scanner:
             closed = ms_cd_cell.value or ms_status_value == pcd.lower()
 
             target_vp = self.vulnerability_param == self.trim(self.ms[self.ms_col_ids["VP"] + ms_row_str].value)
-            target_entity = self.entity == self.trim(self.ms[self.ms_col_ids["Entity"] + ms_row_str].value)
+            target_entity = self.trim(self.ms[self.ms_col_ids["Entity"] + ms_row_str].value) in self.target_entities_by_ips['entities']
             date_created = self.trim(self.ms[self.ms_col_ids["Date"] + ms_row_str].value)
 
             if not (target_entity and target_vp) or closed: continue
@@ -159,13 +224,21 @@ class Scanner:
 
 
     def check_scansheet_with_mastersheet(self):
+
+        entity = self.target_entities_by_ips['entities'][0]
+        host_key = 'Host'
+        if not self.internal:
+            host_key = 'IP'
         
         for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_col_ids["Plugin"]):
 
             ss_row_str = str(ss_row.row)
             ss_plugin_value = self.trim(ss_row.value).lower()
-            ss_host_value = self.trim(self.ss[self.ss_col_ids["Host"] + ss_row_str].value).lower()
-            ss_severity_value = self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value).lower()
+            ss_host_value = self.trim(self.ss[self.ss_col_ids[host_key] + ss_row_str].value).lower()
+            ss_severity_value = self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value)
+
+            if not self.internal:
+                entity = str(self.target_entities_by_ips[ss_host_value]).upper()
 
             if not (ss_plugin_value or ss_host_value or ss_severity_value): continue
 
@@ -177,7 +250,7 @@ class Scanner:
 
                 same_plugin = ms_plugin_value == ss_plugin_value 
                 same_host = ms_host_value == ss_host_value
-                same_severity = self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row].value).lower() == ss_severity_value
+                same_severity = self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row].value).lower() == ss_severity_value.lower()
 
                 if same_plugin and same_host and same_severity:
                     vulnerabily_exists = True
@@ -185,20 +258,27 @@ class Scanner:
 
             if not vulnerabily_exists:
 
-                ms_last_empty_row = str(len(self.ms['A']) + 1)
+                ms_last_empty_row = str(self.ms.max_row + 1)
 
-                self.set(self.ms[self.ms_col_ids["VP"] + ms_last_empty_row], self.vulnerability_param)
-                self.set(self.ms[self.ms_col_ids["Status"] + ms_last_empty_row], 'pending')
-                self.set(self.ms[self.ms_col_ids["Date"] + ms_last_empty_row], self.scan_date)
-                self.set(self.ms[self.ms_col_ids["Entity"] + ms_last_empty_row], self.entity)
-                self.set(self.ms[self.ms_col_ids["NCF"] + ms_last_empty_row], 'New')
+                new = {
+                    'VP': self.vulnerability_param,
+                    'Status': 'pending',
+                    'Date': self.scan_date,
+                    'Entity': entity, 
+                    'NCF': 'New', 
+                    'Plugin': int(ss_plugin_value), 
+                    'Severity': int(ss_severity_value) if ss_severity_value.isnumeric() else ss_severity_value
+                }
 
-                for n in self.nm_column_keys:
-                    ss_column = self.non_mandatory_columns['ss'][n]
-                    ms_column = self.non_mandatory_columns['ms'][n]
-                    if not (ss_column and ms_column):
-                        continue
-                    self.set(self.ms[self.non_mandatory_columns['ms'][n] + ms_last_empty_row], self.ss[self.non_mandatory_columns['ss'][n] + ss_row_str].value)
+                for key, value in new.items():
+                    self.set(self.ms[self.ms_col_ids[key] + ms_last_empty_row], value)
+
+                for k in self.ms_col_names.keys():
+                    ms_column = self.ms_col_ids[k]
+                    ss_column = self.ss_col_ids[k]
+
+                    if not (ss_column and ms_column) or (k in new.keys()): continue
+                    self.set(self.ms[ms_column + ms_last_empty_row], self.ss[ss_column + ss_row_str].value)
 
                 self.total_updates["New"] += 1
 
@@ -225,7 +305,18 @@ class Scanner:
         # Identify columns
         self.get_columns()
 
+        # Change D14 name to KATIM
+        for row in self.get_column_data(self.ms, self.ms_col_ids["Entity"]):
+            if self.trim(row.value).upper() in ['D14', 'DIGITAL14', 'D14/KATIM']: self.set(row, 'KATIM')
+
         cprint('Done!', 'success')
+
+        if not self.internal:
+            cprint('Identifying Entities - (scansheet ' + self.scan_index + ' with all-ips sheet).....')
+            self.identify_entities_by_ips()
+            cprint('Done!', 'success')
+        else:
+            self.target_entities_by_ips['entities'] = [self.entity]
 
         # # Check mastersheet with scansheet
         cprint('Scanning & updating Mastersheet with scansheet ' + self.scan_index + '.....')

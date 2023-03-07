@@ -1,5 +1,5 @@
 
-VULNERABILITY SCANNER v2.3.1
+VULNERABILITY SCANNER v3.0.0
 
 Update one file - Mastersheet (MS) against multiple others - Scansheets (SS)
 

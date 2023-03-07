@@ -1,26 +1,4 @@
-import sys, os, webbrowser, subprocess, win32com.client as win32, playsound as player, openpyxl, csv, dateutil.parser as parser
-
-column_names = {
-    'Plugin': 'Plugin~&~&~Plugin ID',
-    'VP': 'Vulnerability Parameter~&~&~internal/external~&~&~Scan type',
-    'CVE': 'CVE',
-    'PN': 'Plugin Name~&~&~Name',
-    'Status': 'Status',
-    'Date': 'Date',
-    'NCF': 'New/Carried forward',
-    'CD': 'Close Date',
-    'HO': 'How old',
-    'SBD': 'SLA Breached / Day',
-    'Severity': 'Severity',
-    'Entity': 'Entity',
-    'Host': 'Host~&~&~Ip Address',
-    'NBN': 'NetBIOS Name',
-    'Description': 'Description',
-    'Solution': 'Solution',
-    'DD': 'Date discovered~&~&~First Discovered~&~&~First found',
-    'CCD': 'Closing/Current Date',
-    'SBDC': 'SLA Breached / Day Count'
-}
+import sys, os, webbrowser, subprocess, win32com.client as win32, playsound as player, openpyxl, csv, dateutil.parser as parser, json
 
 # from https://stackoverflow.com/questions/31836104/pyinstaller-and-onefile-how-to-include-an-image-in-the-exe-file
 
@@ -65,6 +43,10 @@ def _dir_(path: str):
     split.pop()
     return '/'.join(split)
 
+def from_json_file(path):
+    with open(resource_path(path), 'r') as f:
+        return json.load(f)
+
 
 def to_excel(path):
     splitted = path.split('/')
@@ -77,7 +59,7 @@ def to_excel(path):
     ws = wb.active
     tmp_path = resource_path('__tmp__\\' + name + '.xlsx')
 
-    with open(path) as f:
+    with open(path, encoding='cp850') as f:
         reader = csv.reader(f)
         for row in reader:
             ws.append(row)
@@ -101,7 +83,7 @@ def cprint(value: str = '', type: str = 'info', lable=True):
         "info": "\033[96m {}\033[00m",
         "success": "\033[92m {}\033[00m",
         "warn": "\033[93m {}\033[00m"
-    }[type].format(('[' + type.upper() + ']: ' if lable else '') + value))
+    }['warn' if type == 'warning' else type].format(('[' + type.upper() + ']: ' if lable else '') + value))
 
 def beep(play_sound):
     try:

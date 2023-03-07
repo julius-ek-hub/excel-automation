@@ -8,6 +8,7 @@ Download the executable that would run on Windows OS only. Found in [dist folder
 
 File  | Size | Action
 ------------- | ------------- | ------------
+vscanner-v3.0.0  | 10.3MB  | [Download](https://github.com/julius-ek-hub/excel-automation/raw/main/dist/vscanner-v3.0.0.exe "Click to download executable")
 vscanner-v2.3.1  | 10MB  | [Download](https://github.com/julius-ek-hub/excel-automation/raw/main/dist/vscanner-v2.3.1.exe "Click to download executable")
 vscanner-v2.3.0  | 10MB  | [Download](https://github.com/julius-ek-hub/excel-automation/raw/main/dist/vscanner-v2.3.0.exe "Click to download executable")
 vscanner-v2.2.0  | 17.6MB  | [Download](https://github.com/julius-ek-hub/excel-automation/raw/main/dist/vscanner-v2.2.0.exe "Click to download executable")

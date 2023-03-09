@@ -1,0 +1,13 @@
+
+Worksheet target.
+----------------------------
+
+Whenever you create an excel file, it defaults to one worksheet called Sheet1.
+You can check the name at the bottom left of the Excel file window.
+
+Leave the answer to the target worksheet question as None if any of the following is true:
+1) There is only one worksheet in the file, doesn't matter the name.
+2) You are sure that the active worksheet is the worksheet the program needs to use. Active worksheet is the 
+one that opens automatically when you launch an Excel file, it is usually the last worksheet you 
+visited before closing and saving the file.
+Otherwise you must provide the name of the worksheet as answer.

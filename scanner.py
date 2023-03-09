@@ -33,6 +33,12 @@ class Scanner:
     @staticmethod
     def set(cell, value):
         cell.value = value
+
+    @staticmethod
+    def severity(value):
+        if str(value).isnumeric():
+            return ['None', 'Low', 'Medium', 'High', 'Critical'][int(value)]
+        return value
     
     @staticmethod
     def get_column_data(sheet, column):
@@ -166,10 +172,10 @@ class Scanner:
 
             ms_plugin_value = self.trim(ms_row.value).lower()
             ms_host_value = self.trim(self.ms[self.ms_col_ids["Host"] + ms_row_str].value).lower()
-            ms_severity_value = self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row_str].value).lower()
+            ms_severity_value = self.severity(self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row_str].value)).lower()
             ms_status_value = self.trim(ms_status_cell.value).lower()
 
-            if not (ms_plugin_value or ms_host_value or ms_severity_value): continue
+            if ms_severity_value.lower() == 'none' or not (ms_plugin_value or ms_host_value or ms_severity_value): continue
 
             closed = ms_cd_cell.value or ms_status_value == pcd.lower()
 
@@ -193,7 +199,7 @@ class Scanner:
 
                 ss_plugin_value = self.trim(ss_row.value).lower()
                 ss_host_value = self.trim(self.ss[self.ss_col_ids["Host"] + ss_row_str].value).lower()
-                ss_severity_value = self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value).lower()
+                ss_severity_value = self.severity(self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value)).lower()
 
                 if not (ss_plugin_value or ss_host_value or ss_severity_value): continue
 
@@ -235,12 +241,12 @@ class Scanner:
             ss_row_str = str(ss_row.row)
             ss_plugin_value = self.trim(ss_row.value).lower()
             ss_host_value = self.trim(self.ss[self.ss_col_ids[host_key] + ss_row_str].value).lower()
-            ss_severity_value = self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value)
+            ss_severity_value = self.severity(self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value))
 
             if not self.internal:
                 entity = str(self.target_entities_by_ips[ss_host_value]).upper()
 
-            if not (ss_plugin_value or ss_host_value or ss_severity_value): continue
+            if ss_severity_value.lower() == 'none' or not (ss_plugin_value or ss_host_value or ss_severity_value): continue
 
             vulnerabily_exists = False
 
@@ -250,7 +256,7 @@ class Scanner:
 
                 same_plugin = ms_plugin_value == ss_plugin_value 
                 same_host = ms_host_value == ss_host_value
-                same_severity = self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row].value).lower() == ss_severity_value.lower()
+                same_severity = self.severity(self.trim(self.ms[self.ms_col_ids["Severity"] + ms_row].value)).lower() == ss_severity_value.lower()
 
                 if same_plugin and same_host and same_severity:
                     vulnerabily_exists = True

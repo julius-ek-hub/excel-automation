@@ -40,6 +40,12 @@ class Scanner:
             return ['None', 'Low', 'Medium', 'High', 'Critical'][int(value)]
         return value
     
+    def host_key(self):
+        _key = 'Host'
+        if not self.internal:
+            _key = 'IP'
+        return _key
+    
     @staticmethod
     def get_column_data(sheet, column):
         if not column:
@@ -61,7 +67,7 @@ class Scanner:
         for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_col_ids["Plugin"]):
 
             ss_row_str = str(ss_row.row)
-            ss_ip_value = self.trim(self.ss[self.ss_col_ids["Host"] + ss_row_str].value).lower()
+            ss_ip_value = self.trim(self.ss[self.ss_col_ids[self.host_key()] + ss_row_str].value).lower()
 
             if self.target_entities_by_ips.get(ss_ip_value) or ss_ip_value in unknown_entity_ips: continue
 
@@ -83,7 +89,7 @@ class Scanner:
 
                 ip = self.trim(ips_sheet['A' + ip_row_str].value)
                 entity = self.trim(ips_sheet['B' + ip_row_str].value).upper().replace('_', ' ')
-                entity = 'KATIM' if entity in ['D14', 'DIGITAL14', 'D14/KATIM'] else ('EDGE' if entity == 'EDGE_CORP' else ('KNOWLEDGE POINT' if entity == 'KPOINT' else entity))
+                entity = 'KATIM' if entity in ['D14', 'DIGITAL14', 'D14/KATIM'] else ('EDGE' if entity == 'EDGE CORP' else ('KNOWLEDGE POINT' if entity == 'KPOINT' else entity))
 
                 if ip == ss_ip_value:
                     self.target_entities_by_ips[ss_ip_value] = entity
@@ -92,7 +98,7 @@ class Scanner:
 
             if entity_unknon:
 
-                for ms_row in self.get_column_data(sheet=self.ms, column=self.ms_col_ids["Plugin"]):
+                for ms_row in self.get_column_data(sheet=self.ms, column=self.ms_col_ids["Host"]):
 
                     ms_row_str = str(ms_row.row)
                     ms_ip_value = self.trim(self.ms[self.ms_col_ids["Host"] + ms_row_str].value).lower()
@@ -154,7 +160,7 @@ class Scanner:
 
         for key in self.ss_col_names.keys():
             important = False
-            if key in ['Host' if self.internal else 'IP', 'Plugin', 'Severity']: important = True
+            if key in [self.host_key(), 'Plugin', 'Severity']: important = True
             self.ss_col_ids[key] = self.get_column_by_all_means(sheet=self.ss, key=key, col_names=self.ss_col_names, important=important, sheet_name='Scansheet ' + self.scan_index)
 
 
@@ -198,7 +204,7 @@ class Scanner:
                 ss_row_str = str(ss_row.row)
 
                 ss_plugin_value = self.trim(ss_row.value).lower()
-                ss_host_value = self.trim(self.ss[self.ss_col_ids["Host"] + ss_row_str].value).lower()
+                ss_host_value = self.trim(self.ss[self.ss_col_ids[self.host_key()] + ss_row_str].value).lower()
                 ss_severity_value = self.severity(self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value)).lower()
 
                 if not (ss_plugin_value or ss_host_value or ss_severity_value): continue
@@ -232,19 +238,13 @@ class Scanner:
     def check_scansheet_with_mastersheet(self):
 
         entity = self.target_entities_by_ips['entities'][0]
-        host_key = 'Host'
-        if not self.internal:
-            host_key = 'IP'
         
         for ss_row in self.get_column_data(sheet=self.ss, column=self.ss_col_ids["Plugin"]):
 
             ss_row_str = str(ss_row.row)
             ss_plugin_value = self.trim(ss_row.value).lower()
-            ss_host_value = self.trim(self.ss[self.ss_col_ids[host_key] + ss_row_str].value).lower()
+            ss_host_value = self.trim(self.ss[self.ss_col_ids[self.host_key()] + ss_row_str].value).lower()
             ss_severity_value = self.severity(self.trim(self.ss[self.ss_col_ids["Severity"] + ss_row_str].value))
-
-            if not self.internal:
-                entity = str(self.target_entities_by_ips[ss_host_value]).upper()
 
             if ss_severity_value.lower() == 'none' or not (ss_plugin_value or ss_host_value or ss_severity_value): continue
 
@@ -264,6 +264,9 @@ class Scanner:
 
             if not vulnerabily_exists:
 
+                if not self.internal:
+                    entity = str(self.target_entities_by_ips[ss_host_value]).upper()
+
                 ms_last_empty_row = str(self.ms.max_row + 1)
 
                 new = {
@@ -273,7 +276,8 @@ class Scanner:
                     'Entity': entity, 
                     'NCF': 'New', 
                     'Plugin': int(ss_plugin_value), 
-                    'Severity': int(ss_severity_value) if ss_severity_value.isnumeric() else ss_severity_value
+                    'Severity': int(ss_severity_value) if ss_severity_value.isnumeric() else ss_severity_value,
+                    'Host': ss_host_value
                 }
 
                 for key, value in new.items():
@@ -311,9 +315,11 @@ class Scanner:
         # Identify columns
         self.get_columns()
 
-        # Change D14 name to KATIM
+        # Change D14 name to KATIM and rename BR
         for row in self.get_column_data(self.ms, self.ms_col_ids["Entity"]):
-            if self.trim(row.value).upper() in ['D14', 'DIGITAL14', 'D14/KATIM']: self.set(row, 'KATIM')
+            entity = self.trim(row.value).upper()
+            if entity in ['D14', 'DIGITAL14', 'D14/KATIM']: self.set(row, 'KATIM')
+            if entity == 'BEACONRED': self.set(row, 'BEACON RED')
 
         cprint('Done!', 'success')
 
